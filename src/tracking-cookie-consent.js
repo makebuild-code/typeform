@@ -4,14 +4,14 @@ if(document.cookie.indexOf('OptanonAlertBoxClosed') === -1){
 } else {
   const lastOnetrustUpdate = '2022/06/14, 16:51'
   const cookieString = document.cookie;
-  const i = document.cookie.indexOf('OptanonAlertBoxClosed') + ('OptanonAlertBoxClosed=').length;
-  const dateString = '';
-
+  let i = document.cookie.indexOf('OptanonAlertBoxClosed') + ('OptanonAlertBoxClosed=').length;
+  let dateString = '';
+  
   while(cookieString[i] && cookieString[i] !== ';') {
     dateString += cookieString[i];
-    i++;
+    i++;  // This was causing the error because i was const
   }
-
+  
   // check if reconsent needed because of onetrust list update
   if(new Date(`${lastOnetrustUpdate}`) > new Date(dateString)) {
     shouldShowBanner = true;
@@ -26,7 +26,6 @@ try {
 } catch (err) {
   console.warn('Localstorage was not accessible');
 }
-
 
 if (shouldShowBanner) {
   // change this classname according to webflow elements

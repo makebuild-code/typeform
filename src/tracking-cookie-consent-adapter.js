@@ -73,9 +73,8 @@ window.OptanonWrapper = function OptanonWrapper() {
 }
 
 function attachCookieConsentListeners() {
-  // change according to your class names
-  document.querySelector('#cookie-settings-link').addEventListener('click', onShowSettings);
-  document.querySelector('#cookie-accept-btn').addEventListener('click', onAllowAllCookies);
+  document.querySelector('#cookie-settings-link')?.addEventListener('click', onShowSettings);
+  document.querySelector('#cookie-accept-btn')?.addEventListener('click', onAllowAllCookies);
 }
 
 try {
