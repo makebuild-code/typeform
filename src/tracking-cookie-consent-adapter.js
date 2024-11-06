@@ -24,7 +24,8 @@ function onRejectAllCookies() {
   window.dispatchEvent(oneTrustCookiesRejectedEvent)
 }
 
-function onShowSettings() {
+function onShowSettings(event) {
+  event.preventDefault();
   settingsClicked = true;
 
   callOneTrustSdk(function sdkSettingsCallback() {
@@ -40,7 +41,11 @@ function onShowSettings() {
   })
 }
 
-function onAllowAllCookies() {
+function onAllowAllCookies(event) {
+  if (event) {
+    event.preventDefault();
+  }
+
   try {
     localStorage.setItem('CustomCookieBannerAcceptIntent', true)
   } catch (err) {
