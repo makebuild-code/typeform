@@ -46,38 +46,23 @@ function generateFaqSchema() {
  * Generates and injects breadcrumb schema script.
  */
 function generateBreadcrumbSchema() {
-    // Check for the existence of the breadcrumb container.
     const breadcrumbContainer = document.querySelector('.secondary-breadcrumb');
     if (!breadcrumbContainer) {
-        //console.log('Breadcrumb container not found.');
         return;
     }
 
-    // Define the home breadcrumb.
-    const homeBreadcrumb = {
-        '@type': 'ListItem',
-        position: 1,
-        item: {
-            '@id': window.location.origin,
-            name: 'Home',
-        },
-    };
-
     // Get breadcrumb items from the container.
-    const breadcrumbItems = breadcrumbContainer.querySelectorAll('.breadcrumb_item-wrapper a');
+    const breadcrumbItems = breadcrumbContainer.querySelectorAll('.breadcrumb-bar_wrap a');
 
-    // Map breadcrumb items to schema, starting positions at 2.
+    // Map breadcrumb items to schema, starting positions at 1 now
     const breadcrumbSchema = Array.from(breadcrumbItems).map((item, index) => ({
         '@type': 'ListItem',
-        position: index + 2, // Position starts at 2 because home is 1.
+        position: index + 1, // Position starts at 1 now
         item: {
             '@id': item.href,
             name: item.textContent.trim(),
         },
     }));
-
-    // Prepend the home breadcrumb to the list.
-    breadcrumbSchema.unshift(homeBreadcrumb);
 
     injectSchemaScript('breadcrumb-schema', 'BreadcrumbList', {
         itemListElement: breadcrumbSchema,
