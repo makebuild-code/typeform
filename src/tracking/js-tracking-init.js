@@ -1,3 +1,4 @@
+// ⚠️ This code should be executed inside Webflow; not referenced as an external script.
 window.addEventListener('OneTrustGroupsUpdated', function () {
     console.log('one trust groups updated');
     // Now you can run following consentUtil check the exact consent.
