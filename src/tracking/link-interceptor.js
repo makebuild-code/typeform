@@ -28,6 +28,12 @@
       const href = linkHref || targetHref
       const anchorTarget = linkTarget || targetTarget
 
+      // login tracking
+      if (linkHref && linkHref.includes('login')) {
+        console.log('a login link clicked');
+        window.trackingHelper.trackLogin(linkHref, anchorTarget.innerText || '')
+      }
+
       // signup tracking
       if (linkHref && linkHref.includes('signup')) {
         console.log('a signup link clicked');

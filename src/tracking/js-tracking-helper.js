@@ -58,4 +58,14 @@ window.trackingHelper = {
       location: location,
     });
   },
+  trackLogin: (url, label, location = '') => {
+    window.trackingHelper.trackItemClicked({
+      item: 'login',
+      item_type: 'link',
+      link_url: url,
+      label: window.trackingHelper.snakeCase(label),
+      product: 'typeform',
+      location: location,
+    });
+  },
 }
