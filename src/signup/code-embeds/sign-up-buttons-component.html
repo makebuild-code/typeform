@@ -1,0 +1,220 @@
+<!--
+Following IDs are used in this script, and they should be attached to the buttons
+#signup-buttons-google
+#signup-buttons-microsoft
+-->
+<script>
+  (function handleSocialSignupButtons() {
+    const AUTH_BRIDGE_LOGIN_CALLBACK = 'https://admin.typeform.com/auth/okta/callback';
+    const OKTA_DOMAIN = 'https://auth.typeform.com/oauth2/default/v1/authorize';
+    const OKTA_CLIENT_ID = '0oa1nigb1jQqJMb7f4x7';
+    const GOOGLE_IDP_ID = '0oa1nic7hmTM5eytN4x7';
+    const MICROSOFT_IDP_ID = '0oa3ms5jd9FloU2RI4x7';
+    const OKTA_URL = 'https://auth.typeform.com/oauth2/default/v1/authorize'
+    // const COOKIE_DOMAIN = '.typeform.com'
+    const COOKIE_DOMAIN = 'typeform-website-cbf6fc2c8ca977b811c224.webflow.io'
+
+    function addCookiesData(signupData) {
+      const cookies = [
+        'gspk',
+        'gsxid',
+        '_ga',
+        '_fbp',
+        '_fbc',
+        'cje',
+      ].reduce((acc, cookie) => {
+        const value = Cookies.get(cookie)
+        return value ? { ...acc, [cookie]: value } : acc
+      }, {})
+
+      return {
+        ...signupData,
+        cookies,
+      }
+    }
+
+    function addParamsData(signupData) {
+      const currentSearchParams = new window.URLSearchParams(window.location.search)
+      return {
+        ...signupData,
+        searchParams: {
+          ...Object.fromEntries(currentSearchParams),
+          tid: window.tid,
+        },
+      }
+    }
+
+    function addReferrer(signupData) {
+      const data = { ...signupData }
+      if (document.referrer) {
+        data.referrer = document.referrer
+      }
+      return data
+    }
+
+    function addCelloReferralCode(signupData) {
+      const celloReferral = Cookies.get('cello-referral')
+      return celloReferral ? { ...signupData, celloReferral } : signupData
+    }
+
+    function addReferralCode(signupData) {
+      const currentSearchParams = new window.URLSearchParams(window.location.search)
+      const referralCode = currentSearchParams.get('rsCode')
+      return referralCode ? { ...signupData, referralCode } : signupData
+    }
+
+    function addPartnerStackData(signupData) {
+      const gspk = Cookies.get('gspk')
+      const gsxid = Cookies.get('gsxid')
+
+      let data
+
+      if (gspk && gsxid) {
+        try {
+          data = {
+            ...signupData,
+            partnerstack: {
+              partnerKey: window.atob(gspk),
+              userId: gsxid,
+            },
+          }
+        } catch (e) {
+          data = signupData
+        }
+      }
+
+      return data
+    }
+
+    function setPartnerStackCookiesFromParams() {
+      const currentSearchParams = new window.URLSearchParams(window.location.search)
+
+      const cookieConfig = getCookieConfig(90)
+
+      const gspk = currentSearchParams.get('gspk')
+      const gsxid = currentSearchParams.get('gsxid')
+
+      if (gspk && gsxid) {
+        // persist cookie only if gspk is legit
+        try {
+          window.atob(gspk)
+        } catch (e) {
+          return
+        }
+        Cookies.set('gspk', gspk, cookieConfig)
+        Cookies.set('gsxid', gsxid, cookieConfig)
+      }
+    }
+
+    const compose =
+      (...functions) =>
+        args =>
+          functions.reduceRight((arg, fn) => fn(arg), args)
+
+    function buildSignupExtra() {
+      return compose(
+        addCookiesData,
+        addParamsData,
+        addReferrer,
+        addCelloReferralCode,
+        addReferralCode,
+        addPartnerStackData
+      )({})
+    }
+
+    const getCookieConfig = (expirationInDays = '') => {
+      const config = {
+        path: '/',
+        domain: COOKIE_DOMAIN,
+        secure: true,
+        sameSite: 'none',
+        partitioned: true,
+      }
+
+      if (expirationInDays) {
+        config.expires = expirationInDays
+      }
+
+      return config
+    }
+
+    const generateId = (n = 22) => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+      let text = ''
+      for (let i = 0; i < n; i++) {
+        text += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      return text
+    }
+    const generateState = (newTabState = false) => {
+      const state = generateId();
+      const in10Minutes = (1 / (24 * 60)) * 10 // 1day => 24h * 60 mins
+      Cookies.set('signup_state', state, getCookieConfig(in10Minutes))
+
+      return state
+    }
+    const setSignupCookies = ({ provider, device }) => {
+      const cookieConfig = getCookieConfig(365)
+      const sessionCookieConfig = getCookieConfig()
+
+      Cookies.set('signup_provider', provider, getCookieConfig(365))
+
+      Cookies.set('signup_device', device, cookieConfig)
+      Cookies.set('signup_user_agent', navigator.userAgent, cookieConfig)
+      Cookies.set(
+        'signup_extra',
+        JSON.stringify(buildSignupExtra()),
+        sessionCookieConfig
+      )
+
+      setPartnerStackCookiesFromParams()
+    }
+
+    const state = generateState()
+
+    const getSocialSignupRedirectUrl = (idpId) => {
+      const params = {
+        client_id: OKTA_CLIENT_ID,
+        idp: idpId,
+        response_type: 'code',
+        scope: 'openid email',
+        redirect_uri: AUTH_BRIDGE_LOGIN_CALLBACK,
+        nonce: generateId(),
+        state,
+      }
+      const queries = new URLSearchParams(params)
+
+      const socialSignupRedirectUrl = new URL(OKTA_URL)
+      socialSignupRedirectUrl.search = queries.toString()
+
+      return socialSignupRedirectUrl.toString()
+    }
+
+    const handleSocialSignupClick = (provider) => (event) => {
+      event.preventDefault();
+      const device = isMobile.any ? 'mobile' : 'desktop' // ismobilejs added globaly
+      setSignupCookies({ provider, device })
+
+      window.trackingHelper.trackItemClicked({
+        item: 'social_signup',
+        item_type: 'button',
+        label: provider,
+        location: 'body',
+        typeform_property: 'admin_access',
+        link_url: event.currentTarget.href,
+      })
+      console.log('redirect to', event.currentTarget.href);
+      // Associate signup with affiliate
+      // trackCjAffiliatesSignup()
+    }
+
+    const googleSignupButton = document.querySelector('#signup-buttons-google');
+    const microsoftSignupButton = document.querySelector('#signup-buttons-microsoft');
+
+    googleSignupButton.setAttribute('href', getSocialSignupRedirectUrl(GOOGLE_IDP_ID));
+    microsoftSignupButton.setAttribute('href', getSocialSignupRedirectUrl(MICROSOFT_IDP_ID));
+
+    googleSignupButton.addEventListener('click', handleSocialSignupClick('Google'));
+    microsoftSignupButton.addEventListener('click', handleSocialSignupClick('Microsoft'));
+  })();
+</script>

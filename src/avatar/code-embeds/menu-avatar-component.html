@@ -1,0 +1,194 @@
+<!-- 
+Following cc-targets are used in this script, and they should be attached to the corresponding elements:
+
+[cc-target="header-user-component"]
+[cc-target="header-auth-actions"]
+[cc-target="header-avatar"]
+[cc-target="header-avatar__initials"]
+[cc-target="header-avatar__gravatar"]
+[cc-target="header-dropdown-user-name"]
+[cc-target="header-dropdown-user-email"]
+-->
+<style>
+  [cc-target="header-user-component"].cc-state-active {
+    display: block;
+  }
+
+  [cc-target="header-auth-actions"].cc-state-inactive {
+    display: none;
+  }
+
+  [cc-target="header-user-component"].cc-state-active [cc-target="header-avatar"] {
+    background-image: none;
+    background-position: unset;
+    position: relative;
+    overflow: hidden;
+  }
+
+  [cc-target="header-avatar__initials"] {
+    font: 500 13px / 123% -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    color: #3d3d3c;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 98;
+  }
+
+  [cc-target="header-avatar__gravatar"] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    z-index: 99;
+  }
+
+  @keyframes cc-avatar-state-loading-animation {
+    0% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
+
+    100% {
+      opacity: 1;
+    }
+  }
+
+  [cc-avatar-state="loading"] {
+    animation: 1.5s ease-in-out 0.5s infinite cc-avatar-state-loading-animation;
+    background-color: #CFCFCE;
+  }
+</style>
+<script>
+  (function avatarComponentScope() {
+    const userEmail = Cookies.get('tf_email');
+    if (!userEmail) {
+      return;
+    }
+
+    const colorMapping = {
+      bgGroup6: "#cfcfce",
+      bgGroup1: "#b5ddfc",
+      bgGroup2: "#e6cef3",
+      bgGroup3: "#fdccc3",
+      bgGroup4: "#a8e6bd",
+      bgGroup5: "#f4d39f",
+    }
+
+    const getBgGroupBasedOnLetter = (letter) => {
+      const groups = [/[a-e]/i, /[f-j]/i, /[k-n]/i, /[o-r]/i, /[s-v]/i, /[w-z]/i]
+      let index = groups.findIndex((regex) => regex.test(letter))
+
+      // Fixing issues with non letter strings
+      if (index === -1) {
+        index = 0
+      }
+
+      return {
+        name: `bgGroup${index + 1}`,
+        number: index,
+      }
+    }
+
+    const getBackgroundColorForGroup = (groupName) => {
+      return colorMapping[groupName]
+    }
+
+    const getInitials = (fullName) => {
+      const [firstName, ...rest] = fullName.split(' ')
+      const lastName = rest.pop() ?? ''
+      return `${firstName[0] ?? ''}${lastName[0] ?? ''}`
+    }
+
+    const loadMd5Script = () => {
+      return new Promise((resolve, reject) => {
+        const md5Script = document.createElement('script');
+        md5Script.id = "md5-script";
+        md5Script.src = 'https://cdn.jsdelivr.net/npm/md5@2.3.0/dist/md5.min.js';
+        document.head.appendChild(md5Script);
+
+        md5Script.addEventListener('load', () => {
+          resolve()
+        });
+        md5Script.addEventListener('error', () => {
+          reject()
+        });
+      })
+    }
+
+    const getUser = () => {
+      return fetch('https://api.typeform.com/me', {
+        method: 'GET',
+        credentials: "include",
+      })
+        .then(response => response.json())
+    }
+
+    const authActionsSelector = '[cc-target="header-auth-actions"]'
+    const headerUserComponentSelector = '[cc-target="header-user-component"]'
+    const avatarSelector = '[cc-target="header-avatar"]';
+    const dropdownUserNameSelector = '[cc-target="header-dropdown-user-name"]';
+    const dropdownUserEmailSelector = '[cc-target="header-dropdown-user-email"]';
+
+    const avatarElements = document.querySelectorAll(avatarSelector);
+    const headerUserComponent = document.querySelector(headerUserComponentSelector);
+    const authActionsElement = document.querySelector(authActionsSelector);
+
+    authActionsElement.classList.add('cc-state-inactive');
+    headerUserComponent.classList.add('cc-state-active');
+    headerUserComponent.style.pointerEvents = 'none';
+    avatarElements.forEach(avatarElement => {
+      avatarElement.setAttribute('cc-avatar-state', 'loading');
+    });
+
+    Promise.allSettled([loadMd5Script(), getUser()])
+      .then(([md5ScriptResult, userResult]) => {
+        const canUseGravatar = md5ScriptResult.status === 'fulfilled';
+        const userInfo = userResult.status === 'fulfilled' && userResult.value;
+        const initials = getInitials(userInfo?.name || userEmail || '').toUpperCase();
+        const bgGroup = getBgGroupBasedOnLetter(initials[0]);
+        const backgroundColor = getBackgroundColorForGroup(bgGroup.name);
+
+        avatarElements.forEach(avatarElement => {
+          if (canUseGravatar) {
+            const gravatarElement = document.createElement('img');
+            gravatarElement.src = canUseGravatar ? `https://www.gravatar.com/avatar/${MD5(userEmail)}?d=blank` : '';
+            gravatarElement.setAttribute("cc-target", "header-avatar__gravatar");
+            avatarElement.appendChild(gravatarElement);
+          }
+
+          const initialsElement = document.createElement('span');
+          initialsElement.textContent = initials;
+          initialsElement.setAttribute("cc-target", "header-avatar__initials");
+
+          const dropdownUserNameElement = document.querySelector(dropdownUserNameSelector);
+          const dropdownUserEmailElement = document.querySelector(dropdownUserEmailSelector);
+
+          dropdownUserNameElement.textContent = userInfo?.name || userEmail.split('@')[0];
+          dropdownUserEmailElement.textContent = userEmail;
+
+          avatarElement.appendChild(initialsElement);
+          avatarElement.style.backgroundColor = backgroundColor;
+        });
+      })
+      .catch(error => {
+        // sth went wrong, show auth actions back;
+        authActionsElement.classList.remove('cc-state-inactive');
+        headerUserComponent.classList.remove('cc-state-active');
+      }).finally(() => {
+        headerUserComponent.style.pointerEvents = 'unset';
+        avatarElements.forEach(avatarElement => {
+          avatarElement.removeAttribute('cc-avatar-state');
+        });
+      });
+  })();
+</script>
