@@ -1,6 +1,4 @@
-
 (function initTrackingWithAttributesHelper() {
-
   // cc-t- prefixed attributes are used to for custom properties while tracking events
   function getTrackingAttributes(element) {
     return Array.from(element.attributes).reduce((acc, attr) => {
@@ -15,7 +13,7 @@
   window.trackElementWithAttributes = function trackElementWithAttributes(
     element
   ) {
-    const { event, in_view, ...trackingData } = getTrackingAttributes(element);
+    const { event, in_view, in_view_allow_multipe, ...trackingData } = getTrackingAttributes(element);
 
     if (event === "item_clicked") {
       if (!trackingData.item) {
@@ -43,9 +41,8 @@
     window.trackingHelper.trackEvent(event, trackingData);
   };
 
-
   // cc-t-in_view attribute is used to track when an element is in view
-  window.addEventListener("DOMContentLoaded", function initInViewTracking() {
+  document.addEventListener("DOMContentLoaded", function initInViewTracking() {
     const inViewElements = document.querySelectorAll("[cc-t-in_view]");
 
     const observer = new IntersectionObserver(
@@ -53,7 +50,11 @@
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             window.trackElementWithAttributes(entry.target);
-            observer.unobserve(entry.target);
+            if (
+              entry.target.hasAttribute("cc-t-in_view_allow_multipe" !== "true")
+            ) {
+              observer.unobserve(entry.target);
+            }
           }
         });
       },

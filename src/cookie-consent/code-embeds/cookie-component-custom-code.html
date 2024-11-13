@@ -22,7 +22,7 @@
 
 <!-- Attach following IDs to the required elements -->
 <script>
-  window.addEventListener("load", function addCookieBannerListeners() {
+  document.addEventListener("DOMContentLoaded", function addCookieBannerListeners() {
     document.querySelector('#cookie-settings-link').addEventListener('click', window.showCookieSettings);
     document.querySelector('#cookie-accept-btn').addEventListener('click', window.onAllowAllCookies);
   })

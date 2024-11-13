@@ -71,7 +71,7 @@
   });
 
   // View Page Section Event Handler
-  window.addEventListener("load", function pageViewHandler() {
+  document.addEventListener("DOMContentLoaded", function pageViewHandler() {
     window.trackingHelper.trackViewPageSection();
   });
 })();
