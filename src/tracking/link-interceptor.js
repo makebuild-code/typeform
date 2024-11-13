@@ -40,6 +40,12 @@
         window.trackingHelper.trackSignup(linkHref, anchorTarget.innerText || '')
       }
 
+      // contact sales tracking
+      if (linkHref && linkHref.includes('tfsales.typeform.com/to/PxcVKQGb')) {
+        console.log('a contact sales link clicked');
+        window.trackingHelper.trackContactSales(linkHref, anchorTarget.innerText || '')
+      }
+
       // If the user had pressed a key when they click on a link then we'll use native link behaviour
       if (hasKeyPressed(event)) {
         return

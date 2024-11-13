@@ -68,4 +68,14 @@ window.trackingHelper = {
       location: location,
     });
   },
+  trackContactSales: (url, label, location = '') => {
+    window.trackingHelper.trackItemClicked({
+      item: 'enterprise_contact_sales',
+      item_type: 'link',
+      link_url: url,
+      label: window.trackingHelper.snakeCase(label),
+      product: 'typeform',
+      location: location,
+    });
+  },
 }
