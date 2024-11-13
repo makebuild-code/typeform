@@ -1,7 +1,7 @@
 (function trackingCLientHelperScope() {
   const viewPagePropsMapping = [
     {
-      isMatch: () => w === "Not Found",
+      isMatch: () => window.title === "Not Found",
       props: {
         typeform_property: "404_pages",
         section: "public_site_not_found",

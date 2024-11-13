@@ -23,7 +23,7 @@
 
     // For eg. initialize tracking when we have functional consent
     if (hasFunctionalConsent && !trackingClient.isInitialized("segment")) {
-      attributionUtil.generateUser(
+      attributionUtil.default.generateUser(
         ".typeform.com",
         window.getAttributionUserId()
       );
