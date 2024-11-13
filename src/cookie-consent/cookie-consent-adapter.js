@@ -27,7 +27,10 @@
   }
 
   function onShowSettings(event) {
-    event.preventDefault();
+    if (event) {
+      event.preventDefault();
+    }
+
     settingsClicked = true;
 
     callOneTrustSdk(function sdkSettingsCallback() {

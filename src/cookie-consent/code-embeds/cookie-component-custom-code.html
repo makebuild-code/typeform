@@ -20,8 +20,10 @@
   }
 </style>
 
+<!-- Attach following IDs to the required elements -->
 <script>
-  <!-- Attach following IDs to the required elements -->
-  document.querySelector('#cookie-settings-link').addEventListener('click', onShowSettings);
-  document.querySelector('#cookie-accept-btn').addEventListener('click', onAllowAllCookies);
+  window.addEventListener("load", function addCookieBannerListeners() {
+    document.querySelector('#cookie-settings-link').addEventListener('click', window.showCookieSettings);
+    document.querySelector('#cookie-accept-btn').addEventListener('click', window.onAllowAllCookies);
+  })
 </script>
