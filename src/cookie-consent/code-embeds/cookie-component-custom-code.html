@@ -1,0 +1,27 @@
+<style>
+  #onetrust-banner-sdk {
+    display: none !important;
+  }
+
+  .onetrust-pc-dark-filter,
+  #onetrust-banner-sdk {
+    pointer-events: none;
+    display: none !important;
+  }
+
+  .cookie-consent-area {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .show-cookie-banner .cookie-consent-area {
+    opacity: 1;
+    pointer-events: unset;
+  }
+</style>
+
+<script>
+  <!-- Attach following IDs to the required elements -->
+  document.querySelector('#cookie-settings-link').addEventListener('click', onShowSettings);
+  document.querySelector('#cookie-accept-btn').addEventListener('click', onAllowAllCookies);
+</script>
