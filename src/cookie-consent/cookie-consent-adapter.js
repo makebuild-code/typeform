@@ -146,4 +146,6 @@
   window.callOneTrustSdk = callOneTrustSdk;
   window.hideCookieBanner = hideCookieBanner;
   window.onAllowAllCookies = onAllowAllCookies;
+
+  window.dispatchEvent(new Event("CookieConsentAdapterLoaded"));
 })();

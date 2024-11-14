@@ -22,8 +22,8 @@
 
 <!-- Attach following IDs to the required elements -->
 <script>
-  document.addEventListener("DOMContentLoaded", function addCookieBannerListeners() {
+  window.addEventListener("CookieConsentAdapterLoaded", function addCookieBannerListeners() {
     document.querySelector('#cookie-settings-link').addEventListener('click', window.showCookieSettings);
     document.querySelector('#cookie-accept-btn').addEventListener('click', window.onAllowAllCookies);
-  })
+  });
 </script>
