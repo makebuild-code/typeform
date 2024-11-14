@@ -12,11 +12,10 @@
     // Performance Consent
     const hasPerformanceConsent = consentUtil.hasPerformanceConsent();
 
-    // Also initialize Clearbit Script if we have targeting consent
     if (hasTargetingConsent) {
       const clearbitScript = document.createElement("script");
       clearbitScript.id = "clearbit";
-      clearbitScript.innerHTML = `!function(w){var clearbit=w.clearbit=w.clearbit||[];if(!clearbit.initialize)if(clearbit.invoked)w.console&&console.error&&console.error("Clearbit snippet included twice.");else{clearbit.invoked=!0;clearbit.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];clearbit.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);clearbit.push(e);return clearbit}};for(var t=0;t<clearbit.methods.length;t++){var e=clearbit.methods[t];clearbit[e]=clearbit.factory(e)}clearbit.load=function(t){var e=document.createElement("script");e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"x.clearbitjs.com/v1/"+t+"/clearbit.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};clearbit.SNIPPET_VERSION="3.1.0"; clearbit.load("pk_76b17f79dd398468af3f36d637ba1002"); clearbit.page(); }}(window);`;
+      clearbitScript.innerHTML = `!function(w){var clearbit=w.clearbit=w.clearbit||[];if(!clearbit.initialize)if(clearbit.invoked)w.console&&console.error&&console.error("Clearbit snippet included twice.");else{clearbit.invoked=!0;clearbit.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];clearbit.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);clearbit?.push?.(e);return clearbit}};for(var t=0;t<clearbit.methods.length;t++){var e=clearbit.methods[t];clearbit[e]=clearbit.factory(e)}clearbit.load=function(t){var e=document.createElement("script");e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"x.clearbitjs.com/v1/"+t+"/clearbit.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};clearbit.SNIPPET_VERSION="3.1.0"; clearbit.load("pk_76b17f79dd398468af3f36d637ba1002"); clearbit.page(); }}(window);`;
 
       document.body.appendChild(clearbitScript);
     }
@@ -46,6 +45,8 @@
       if (!window.analytics) return;
 
       window.analytics.ready(() => {
+        window.trackingHelper.trackViewPageSection();
+
         if (window.reveal) {
           const { company } = window.reveal;
 
@@ -68,10 +69,5 @@
         }
       });
     }
-  });
-
-  // View Page Section Event Handler
-  document.addEventListener("DOMContentLoaded", function pageViewHandler() {
-    window.trackingHelper.trackViewPageSection();
   });
 })();

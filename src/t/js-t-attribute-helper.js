@@ -13,7 +13,8 @@
   window.trackElementWithAttributes = function trackElementWithAttributes(
     element
   ) {
-    const { event, in_view, in_view_allow_multipe, ...trackingData } = getTrackingAttributes(element);
+    const { event, in_view, in_view_allow_multipe, ...trackingData } =
+      getTrackingAttributes(element);
 
     if (event === "item_clicked") {
       if (!trackingData.item) {
@@ -33,8 +34,12 @@
       return;
     }
 
-    if (typeof in_view !== undefined && in_view !== null && !event) {
+    if (in_view === "true" && !event) {
       window.trackingHelper.trackPageNavigated(trackingData);
+      return;
+    }
+
+    if (!event) {
       return;
     }
 
@@ -51,10 +56,11 @@
           if (entry.isIntersecting) {
             window.trackElementWithAttributes(entry.target);
             if (
-              entry.target.hasAttribute("cc-t-in_view_allow_multipe" !== "true")
+              entry.target.hasAttribute("cc-t-in_view_allow_multipe" === "true")
             ) {
-              observer.unobserve(entry.target);
+              return;
             }
+            observer.unobserve(entry.target);
           }
         });
       },

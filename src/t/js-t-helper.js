@@ -98,6 +98,10 @@
       };
     };
 
+    const log = (...args) => {
+      window.__DEBUG_TRACKING__ && console.trace(...args);
+    }
+
     return {
       setPageTrackingProps: (props) => {
         _viewPageProps = {
@@ -138,31 +142,28 @@
         };
       },
       trackViewPageSection: (data) => {
-        const props = data || {};
-
-        console.log("view_page_section", {
+        const props = {
           page: window.location.href,
           title: document.title,
           ...window.trackingHelper.getMandatoryProperties(),
-          ...props,
-        });
+          ...data || {},
+        };
 
-        trackingClient.trackViewPageSection({
-          page: window.location.href,
-          title: document.title,
-          ...window.trackingHelper.getMandatoryProperties(),
-          ...props,
-        });
+        trackingClient.trackViewPageSection(props);
+
+        log("view_page_section", props);
       },
       trackEvent: (eventName, data) => {
         const props = {
           ...window.trackingHelper.getMandatoryProperties(),
           ...data,
         };
-        console.log(eventName, props);
+
         trackingClient.sendEvent(eventName, props);
+
+        log(eventName, props);
       },
-      trackItemClicked: (trackingData, options) => {
+      trackItemClicked: (trackingData) => {
         const { link_url: rawLinkUrl } = trackingData;
         const link_url = rawLinkUrl
           ? rawLinkUrl.replace(window.location.origin, "")
@@ -174,14 +175,8 @@
           link_url,
         };
 
-        if (options) {
-          trackingClient.trackItemClicked(props, options);
-          return;
-        }
-
-        console.log("item_clicked", props);
-
         trackingClient.trackItemClicked(props);
+        log("item_clicked", props);
       },
       trackSignup: (url, label, location = "") => {
         window.trackingHelper.trackItemClicked({
