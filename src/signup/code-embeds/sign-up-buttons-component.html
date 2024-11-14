@@ -191,7 +191,6 @@ Following IDs are used in this script, and they should be attached to the button
     }
 
     const handleSocialSignupClick = (provider) => (event) => {
-      event.preventDefault();
       const device = isMobile.any ? 'mobile' : 'desktop' // ismobilejs added globaly
       setSignupCookies({ provider, device })
 
@@ -203,9 +202,6 @@ Following IDs are used in this script, and they should be attached to the button
         typeform_property: 'admin_access',
         link_url: event.currentTarget.href,
       })
-      console.log('redirect to', event.currentTarget.href);
-      // Associate signup with affiliate
-      // trackCjAffiliatesSignup()
     }
 
     const googleSignupButton = document.querySelector('#signup-buttons-google');
