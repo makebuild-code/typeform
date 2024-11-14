@@ -47,31 +47,30 @@
   };
 
   // cc-t-in_view attribute is used to track when an element is in view
-  document.addEventListener("DOMContentLoaded", function initInViewTracking() {
-    const inViewElements = document.querySelectorAll("[cc-t-in_view]");
+  const inViewElements = document.querySelectorAll("[cc-t-in_view]");
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            window.trackElementWithAttributes(entry.target);
-            if (
-              entry.target.hasAttribute("cc-t-in_view_allow_multipe" === "true")
-            ) {
-              return;
-            }
-            observer.unobserve(entry.target);
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          window.trackElementWithAttributes(entry.target);
+          if (
+            entry.target.hasAttribute("cc-t-in_view_allow_multipe" === "true")
+          ) {
+            return;
           }
-        });
-      },
-      {
-        threshold: 0,
-        rootMargin: "0px",
-      }
-    );
 
-    inViewElements.forEach((element) => {
-      observer.observe(element);
-    });
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0,
+      rootMargin: "0px",
+    }
+  );
+
+  inViewElements.forEach((element) => {
+    observer.observe(element);
   });
 })();

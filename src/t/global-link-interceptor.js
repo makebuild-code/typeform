@@ -113,30 +113,25 @@
     }
   };
 
-  document.addEventListener(
-    "DOMContentLoaded",
-    function initLinkInterceptors() {
-      const linkMutationObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutationRecord) => {
-          if (mutationRecord.type === "childList") {
-            mutationRecord.addedNodes.forEach(handleMutatedNode(false));
-            mutationRecord.removedNodes.forEach(handleMutatedNode(true));
-          }
-        });
-      });
+  const linkMutationObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutationRecord) => {
+      if (mutationRecord.type === "childList") {
+        mutationRecord.addedNodes.forEach(handleMutatedNode(false));
+        mutationRecord.removedNodes.forEach(handleMutatedNode(true));
+      }
+    });
+  });
 
-      linkMutationObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
+  linkMutationObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 
-      const linksAndButtons = getAllLinksAndButtonsToIntercept();
+  const linksAndButtons = getAllLinksAndButtonsToIntercept();
 
-      linksAndButtons.forEach((link) => {
-        const listener = handleLinkClick(link);
-        listenersMap.set(link, listener);
-        link.addEventListener("click", listener);
-      });
-    }
-  );
+  linksAndButtons.forEach((link) => {
+    const listener = handleLinkClick(link);
+    listenersMap.set(link, listener);
+    link.addEventListener("click", listener);
+  });
 })();
