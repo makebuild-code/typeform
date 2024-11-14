@@ -1,3 +1,4 @@
+// ⚠️ This code should be executed inside Webflow; not referenced as an external script.
 (function linkInterceptor() {
     const HOSTNAMES_ALLOWLIST = ['typeform.com', 'typeform-website.webflow.io'];
     const HOSTNAMES_BLOCKLIST = ['auth.typeform.com'];
