@@ -3,6 +3,19 @@
  */
 const ArticleSchema = {
     /**
+     * Cleans URLs by removing query parameters and hashes
+     */
+    cleanUrl(url) {
+        try {
+            return new URL(url).toString()
+                .split('?')[0]  // Remove query parameters
+                .split('#')[0]; // Remove hash
+        } catch (e) {
+            return url;
+        }
+    },
+
+    /**
      * Injects a JSON-LD schema script into the document head.
      */
     inject(schemaContent) {
@@ -33,7 +46,7 @@ const ArticleSchema = {
             author: {
                 '@type': document.querySelector('[cc-schema-article-id="author-type"]')?.textContent.trim(),
                 name: document.querySelector('[cc-schema-article-id="author-name"]')?.textContent.trim(),
-                url: document.querySelector('[cc-schema-article-id="author-url"]')?.textContent.trim()
+                url: this.cleanUrl(document.querySelector('[cc-schema-article-id="author-url"]')?.textContent.trim())
             }
         };
 
