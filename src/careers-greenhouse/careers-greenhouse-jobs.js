@@ -10,10 +10,11 @@ async function fetchDepartmentJobs() {
 
         const departmentIds = departmentElement.textContent.split(';');
         
-        // Filter jobs from specified departments
+        // Filter and sort jobs from specified departments
         const departmentJobs = data.departments
             .filter(dept => departmentIds.includes(dept.id.toString()))
-            .flatMap(dept => dept.jobs);
+            .flatMap(dept => dept.jobs)
+            .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
         // Get the template element
         const templateItem = document.querySelector('[cc-gh-id="job-item"]');

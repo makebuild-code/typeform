@@ -14,14 +14,19 @@ async function fetchDepartments() {
             const departmentIds = departmentElement.getAttribute('cc-gh-department-id').split(';');
             const jobCountElement = departmentElement.querySelector('[cc-gh-id="department-jobs-count"]');
             
+            // Sum up jobs from all referenced departments
+            const totalJobs = departmentIds.reduce((sum, deptId) => {
+                const dept = departmentMap.get(deptId);
+                return sum + (dept ? dept.jobs.length : 0);
+            }, 0);
+            
             if (jobCountElement) {
-                // Sum up jobs from all referenced departments
-                const totalJobs = departmentIds.reduce((sum, deptId) => {
-                    const dept = departmentMap.get(deptId);
-                    return sum + (dept ? dept.jobs.length : 0);
-                }, 0);
-                
                 jobCountElement.textContent = totalJobs;
+            }
+
+            // Hide department if there are no jobs
+            if (totalJobs === 0) {
+                departmentElement.style.display = 'none';
             }
         });
     } catch (error) {
