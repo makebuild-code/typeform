@@ -30,7 +30,9 @@ const BreadcrumbSchema = {
 
         const cleanUrl = (url) => {
             try {
-                return new URL(url).toString().split('?')[0];
+                return new URL(url).toString()
+                    .split('?')[0]
+                    .split('#')[0];
             } catch (e) {
                 return url;
             }
