@@ -179,6 +179,15 @@
         trackingClient.trackItemClicked(props);
         log("item_clicked", props);
       },
+      trackTmpItemClicked: (item, props) => {
+        const trackingProps = {
+          ...window.trackingHelper.getMandatoryProperties(),
+          item,
+          ...props,
+        };
+        trackingClient.trackTmpItemClicked(trackingProps);
+        log("tmp_item_clicked", props);
+      },
       trackSignup: (url, label, location = "") => {
         window.trackingHelper.trackItemClicked({
           item: "sign_up",

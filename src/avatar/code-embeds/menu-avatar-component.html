@@ -190,5 +190,23 @@ Following cc-targets are used in this script, and they should be attached to the
           avatarElement.removeAttribute('cc-avatar-state');
         });
       });
+
+      window.addEventListener('user:loading', () => {
+        authActionsElement.classList.add('cc-state-inactive');
+        headerUserComponent.classList.add('cc-state-active');
+        headerUserComponent.style.pointerEvents = 'none';
+        avatarElements.forEach(avatarElement => {
+          avatarElement.setAttribute('cc-avatar-state', 'loading');
+        });
+      });
+
+      window.addEventListener('user:initial', () => {
+        authActionsElement.classList.remove('cc-state-inactive');
+        headerUserComponent.classList.remove('cc-state-active');
+        headerUserComponent.style.pointerEvents = 'unset';
+        avatarElements.forEach(avatarElement => {
+          avatarElement.removeAttribute('cc-avatar-state');
+        });
+      });
   })();
 </script>
