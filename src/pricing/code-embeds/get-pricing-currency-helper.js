@@ -68,6 +68,8 @@
         [pricingPlanNames.business]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
         [pricingPlanNames.plus]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
         [pricingPlanNames.basic]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
+        [pricingPlanNames.growth_essentials]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
+        [pricingPlanNames.growth_pro]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
       },
       isPromotional: false,
     };
