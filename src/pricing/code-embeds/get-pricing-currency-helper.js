@@ -3,27 +3,16 @@
   let currencyCode = "";
   let pricingPlans;
 
-  const PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE = 200 / 12;
-
   const BillingPeriod = {
     Monthly: "monthly",
     Yearly: "yearly",
   };
+
   const pricingPlanNames = {
-    pro: "pro",
-    proPlus: "pro_plus",
-    free: "free",
-    essentials: "essentials",
-    professional: "professional",
-    premium: "premium",
     basic: "basic",
     plus: "plus",
     business: "business",
-    default: "default",
     enterprise: "enterprise_tier_1_self_serve",
-    starter: "v4.0_tier1_starter",
-    standard: "v4.0_tier2_standard",
-    advanced: "v4.0_tier3_advanced",
     growth_essentials: "growth_essentials",
     growth_pro: "growth_pro",
     growth_enterprise: "growth_enterprise",
@@ -47,37 +36,6 @@
     pricingPlanNames.growth_enterprise,
   ];
 
-  function getDiscountsMappingByBillingPeriod(discounts) {
-    return discounts.reduce(
-      (mapping, discount) => {
-        if (["both", "yearly"].includes(discount.appliesTo)) {
-          mapping.yearly.push(discount);
-        }
-        if (["both", "monthly"].includes(discount.appliesTo)) {
-          mapping.monthly.push(discount);
-        }
-        return mapping;
-      },
-      { [BillingPeriod.Yearly]: [], [BillingPeriod.Monthly]: [] }
-    );
-  }
-
-  function applyRegularYearlyDiscount(discounts) {
-    const regularYearlyDiscount = {
-      discountPercentages: {
-        [pricingPlanNames.business]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
-        [pricingPlanNames.plus]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
-        [pricingPlanNames.basic]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
-        [pricingPlanNames.growth_essentials]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
-        [pricingPlanNames.growth_pro]: PRICING_3_DOT_1_YEARLY_DISCOUNT_PERCENTAGE,
-      },
-      isPromotional: false,
-    };
-
-    discounts.yearly.push(regularYearlyDiscount);
-    return discounts;
-  }
-
   function calculateYearlySavingForPricing(pricing) {
     if (!pricing?.[BillingPeriod.Monthly] || !pricing?.[BillingPeriod.Yearly]) {
       return null;
@@ -90,95 +48,28 @@
     );
   }
 
-  function calculatePromotionalDiscountModifier(
-    discounts,
-    billingPeriod,
-    planName
-  ) {
-    const discountsForBillingPeriod = discounts[billingPeriod];
+  function applyVisiblePricing(plan) {
+    if (
+      !plan.pricing ||
+      !plan.pricing[BillingPeriod.Yearly]?.price ||
+      !plan.pricing[BillingPeriod.Monthly]?.price
+    ) {
+      return;
+    }
 
-    // const promotionalDiscounts = discountsForBillingPeriod.filter(
-    //   (discount) => discount.isPromotional
-    // );
+    const yearlyBaseAmount =
+      plan.pricing[BillingPeriod.Yearly].price.base_amount;
+    const monthlyBaseAmount =
+      plan.pricing[BillingPeriod.Monthly].price.base_amount;
 
-    const promotionalDiscountModifier = discountsForBillingPeriod.reduce(
-      (currentModifier, discount) => {
-        const discountPercentage = discount.discountPercentages[planName];
-        const discountModifier = 1 - discountPercentage / 100;
-
-        return (currentModifier *= discountModifier);
-      },
-      1
-    );
-    return promotionalDiscountModifier;
-  };
-
-  function calculatePromotionalDiscountModifiers(discounts, planName) {
-    const monthlyTotalDiscountModifier = calculatePromotionalDiscountModifier(
-      discounts,
-      BillingPeriod.Monthly,
-      planName
-    );
-    const yearlyTotalDiscountModifier = calculatePromotionalDiscountModifier(
-      discounts,
-      BillingPeriod.Yearly,
-      planName
-    );
-    return { monthlyTotalDiscountModifier, yearlyTotalDiscountModifier };
-  };
-
-  const deepClone = object => JSON.parse(JSON.stringify(object))
-
-  const clonePriceToDiscountedPrice = (periodPricing) => {
-    periodPricing.discountedPrice = deepClone(periodPricing.price);
-  };
-
-  const applyTotalDiscountModifierToDiscountedPrice = (
-    periodPricing,
-    modifier
-  ) => {
-    periodPricing.discountedPrice.base_amount *= modifier;
-    periodPricing.discountedPrice.amount *= modifier;
-  };
-
-  function applyTotalDiscountModifierToPricePeriods(
-    pricing,
-    monthlyTotalDiscountModifier,
-    yearlyTotalDiscountModifier
-  ) {
-    clonePriceToDiscountedPrice(pricing.monthly);
-    clonePriceToDiscountedPrice(pricing.yearly);
-
-    applyTotalDiscountModifierToDiscountedPrice(
-      pricing.monthly,
-      monthlyTotalDiscountModifier
-    );
-
-    applyTotalDiscountModifierToDiscountedPrice(
-      pricing.yearly,
-      yearlyTotalDiscountModifier
-    );
-  };
-
-  function applyDiscountsToPricingModel(pricingPlans, discounts) {
-    return pricingPlans.map((plan) => {
-      if (!plan.pricing) {
-        return plan;
-      }
-
-      const modifiedPlan = deepClone(plan);
-
-      const { monthlyTotalDiscountModifier, yearlyTotalDiscountModifier } =
-        calculatePromotionalDiscountModifiers(discounts, plan.planName);
-
-      applyTotalDiscountModifierToPricePeriods(
-        modifiedPlan.pricing,
-        monthlyTotalDiscountModifier,
-        yearlyTotalDiscountModifier
-      );
-
-      return modifiedPlan;
-    });
+    plan.pricing[BillingPeriod.Yearly].visiblePrice = {
+      price: Math.ceil(yearlyBaseAmount / 12 / 1000),
+      currency: plan.pricing[BillingPeriod.Yearly].price.currency,
+    };
+    plan.pricing[BillingPeriod.Monthly].visiblePrice = {
+      price: Math.ceil(monthlyBaseAmount / 1000),
+      currency: plan.pricing[BillingPeriod.Yearly].price.currency,
+    };
   }
 
   function transformPlans(plans, allowedPlanCodes = CORE_PLAN_NAMES) {
@@ -189,6 +80,8 @@
           ...plan,
           yearlySaving: calculateYearlySavingForPricing(plan.pricing),
         };
+
+        applyVisiblePricing(result);
 
         if (PLANS_WITH_CUSTOM_PRICING.includes(result.planName)) {
           delete result.pricing;
@@ -209,18 +102,10 @@
         "https://admin.typeform.com/bff/pricing/v3/initial-payload"
       ).then((res) => res.json());
 
-
-      let discounts = [];// you can add extra discounts here if necessary in the future
-      discounts = getDiscountsMappingByBillingPeriod(discounts);
-      discounts = applyRegularYearlyDiscount(discounts);
-
-      const corePlans = applyDiscountsToPricingModel(
-        transformPlans(pricingPayload.plans, CORE_PLAN_NAMES),
-        discounts
-      );
-      const growthPlans = applyDiscountsToPricingModel(
-        transformPlans(pricingPayload.plans, GROWTH_PLAN_NAMES),
-        discounts
+      const corePlans = transformPlans(pricingPayload.plans, CORE_PLAN_NAMES);
+      const growthPlans = transformPlans(
+        pricingPayload.plans,
+        GROWTH_PLAN_NAMES
       );
 
       pricingPlans = {
