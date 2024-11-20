@@ -237,6 +237,25 @@
       document.body.appendChild(clearbitScript);
     }
 
+    if (!hasFunctionalConsent) {
+      fetch("https://www.typeform.com/api/track/page/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          typeformProperty: "public_site",
+          title: document.title,
+          url: window.location.href,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          typeformVersion: "v2",
+          attributionUserId: window.getAttributionUserId(),
+          locale: navigator.language,
+        }),
+      }).catch(() => {});
+    }
+
     // For eg. initialize tracking when we have functional consent
     if (hasFunctionalConsent && !trackingClient.isInitialized("segment")) {
       attributionUtil.default.generateUser(
