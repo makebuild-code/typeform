@@ -250,6 +250,7 @@ async function updateYearlySavings() {
         }
     });
 }
+
 // Call all update functions
 updateCurrencyElements();
 updatePricingElements();
