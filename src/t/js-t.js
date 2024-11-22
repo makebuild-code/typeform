@@ -188,6 +188,16 @@
         trackingClient.trackTmpItemClicked(trackingProps);
         log("tmp_item_clicked", props);
       },
+      trackLogin: (url, label, location = "") => {
+        window.trackingHelper.trackItemClicked({
+          item: "login",
+          item_type: "link",
+          link_url: url,
+          label: window.trackingHelper.snakeCase(label),
+          product: "typeform",
+          location: location,
+        });
+      },
       trackSignup: (url, label, location = "") => {
         window.trackingHelper.trackItemClicked({
           item: "sign_up",
@@ -412,6 +422,12 @@
     const targetTarget = event?.target?.target;
     const href = linkHref || targetHref;
     const anchorTarget = linkTarget || targetTarget;
+
+    // login tracking
+    if (linkHref && linkHref.includes("login")) {
+      window.trackingHelper.trackLogin(linkHref, anchorTarget.innerText || "");
+      console.log("found login");
+    }
 
     // signup tracking
     if (linkHref && linkHref.includes("signup")) {
