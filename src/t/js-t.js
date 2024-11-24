@@ -179,6 +179,15 @@
         trackingClient.trackItemClicked(props);
         log("item_clicked", props);
       },
+      trackMessageShown: (trackingData) => {
+            const props = {
+          ...window.trackingHelper.getMandatoryProperties(),
+          ...trackingData,
+        };
+
+        trackingClient.trackMessageShown(props);
+        log("message_shown", props);
+      },
       trackTmpItemClicked: (item, props) => {
         const trackingProps = {
           ...window.trackingHelper.getMandatoryProperties(),
