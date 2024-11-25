@@ -1,0 +1,43 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Link tracking (working part stays the same)
+  const announcementBannerLinks = document.querySelectorAll('.announcement-banner_wrapper a');
+  announcementBannerLinks.forEach((linkElement) => {
+    linkElement.addEventListener('click', () => {
+      window.trackingHelper.trackItemClicked({
+        item: 'announcement-banner-link',
+        item_type: 'link',
+        typeform_property: 'landing_page',
+        label: linkElement.textContent,
+        link_url: linkElement.href,
+        location: 'header'
+      });
+    });
+  });
+
+  // Message shown tracking
+  const trackBannerShown = () => {
+    const announcementBanner = document.querySelector('.announcement-banner_wrap');
+    
+    if (announcementBanner && 
+        window.trackingHelper && 
+        getComputedStyle(announcementBanner).display !== 'none') {
+      const bannerText = announcementBanner.querySelector('.announcement-banner_text')?.textContent?.trim() || '';
+      console.log('Found banner with text:', bannerText); // Debug log
+      
+      window.trackingHelper.trackEvent("message_shown", {
+        message: bannerText,
+        location: "header"
+      });
+    }
+  };
+
+  // Try both approaches
+  if (window.analytics) {
+    window.analytics.ready(trackBannerShown);
+  } else {
+    // Fallback - try after a short delay
+    setTimeout(trackBannerShown, 1000);
+  }
+});
+</script>
