@@ -180,7 +180,7 @@
         log("item_clicked", props);
       },
       trackMessageShown: (trackingData) => {
-            const props = {
+        const props = {
           ...window.trackingHelper.getMandatoryProperties(),
           ...trackingData,
         };
@@ -426,6 +426,8 @@
   };
   const handleLinkClick = (link) => (event) => {
     const linkHref = link.href;
+    const linkHrefAttribute = link.getAttribute("href");
+    const linkText = link.innerText;
     const targetHref = event?.target?.href;
     const linkTarget = link?.target;
     const targetTarget = event?.target?.target;
@@ -434,13 +436,13 @@
 
     // login tracking
     if (linkHref && linkHref.includes("login")) {
-      window.trackingHelper.trackLogin(linkHref, anchorTarget.innerText || "");
+      window.trackingHelper.trackLogin(linkHref, linkText || "");
       console.log("found login");
     }
 
     // signup tracking
     if (linkHref && linkHref.includes("signup")) {
-      window.trackingHelper.trackSignup(linkHref, anchorTarget.innerText || "");
+      window.trackingHelper.trackSignup(linkHref, linkText || "");
     }
 
     window.trackElementWithAttributes(link);
@@ -460,7 +462,7 @@
       }
 
       // If the link is to an anchor on the same page, then we'll use native link behaviour
-      if (linkHref.startsWith("#")) {
+      if (linkHref.startsWith("#") || linkHrefAttribute.startsWith("#")) {
         return;
       }
 
