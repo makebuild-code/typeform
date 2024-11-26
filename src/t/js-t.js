@@ -235,7 +235,7 @@
 
 // Init JS Tracking
 (function jsTrackingInitScope() {
-  window.addEventListener("OneTrustGroupsUpdated", function () {
+  function initTracking() {
     // Now you can run following consentUtil check the exact consent.
     // Script tags above adds consentUtil helper to global window
 
@@ -324,7 +324,9 @@
         }
       });
     }
-  });
+  }
+  window.addEventListener("OneTrustGroupsUpdated", initTracking);
+  initTracking();
 })();
 
 // Tracking With Attributes Helper
