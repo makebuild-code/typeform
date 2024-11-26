@@ -1,4 +1,6 @@
-// document.addEventListener('DOMContentLoaded', function () {
+// Either include this file in your code embed or copy the content and paste it in your code embed
+// Currently stored in code embed .cc_pricing-tabs inside Component: "Molecule / Pricing Core Plans"
+document.addEventListener('DOMContentLoaded', function () {
     // Custom attribute selectors
     const TAB_GROUP_NAME_ATTR = '[data-pricing-tabgroupname]';
     const TAB_OPTION_ATTR = '[data-pricing-taboption]';
@@ -23,6 +25,12 @@
             if (activeClass) {
                 buttonToActivate.classList.add(activeClass);
             }
+            
+            // Set the initial billing period on signup wrappers
+            const initialBillingPeriod = buttonToActivate.getAttribute('data-pricing-taboption');
+            document.querySelectorAll('[data-pricing-id="signup-button-wrap"]').forEach(wrapper => {
+                wrapper.setAttribute('data-billing-period', initialBillingPeriod);
+            });
         }
 
         buttons.forEach((button) => {
@@ -35,7 +43,6 @@
                 document.querySelectorAll('[data-pricing-id="signup-button-wrap"]').forEach(wrapper => {
                     wrapper.setAttribute('data-billing-period', tabOption);
                 });
-                updateSignupButtons();
 
                 // Remove the active class from all buttons in this group
                 buttons.forEach((btn) => {
@@ -83,18 +90,26 @@
                     }
                 });
 
-                // ScrollTrigger refresh logic
-                if (typeof ScrollTrigger !== 'undefined' && ScrollTrigger) {
-                    setTimeout(() => {
+                // Update signup URLs after all DOM changes are complete
+                setTimeout(() => {
+                    updateSignupButtons();
+                    
+                    // ScrollTrigger refresh after URLs are updated
+                    if (typeof ScrollTrigger !== 'undefined' && ScrollTrigger) {
                         ScrollTrigger.refresh();
-                    }, 100);
-                }
+                    }
+                }, 0);
             });
         });
     });
-// });
 
-async function updateSignupButtons() {
+    // Initial URL update after all tabs are initialized
+    setTimeout(() => {
+        updateSignupButtons();
+    }, 0);
+});
+
+function updateSignupButtons() {
     document.querySelectorAll('[data-pricing-id="signup-button-wrap"]').forEach(wrapper => {
         const planName = wrapper.getAttribute('data-pricing-plan-name');
         const billingPeriod = wrapper.getAttribute('data-billing-period') || 'monthly'; // default to yearly if not specified
@@ -128,5 +143,3 @@ const monthlySignupUrls = {
     growth_pro: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_pro%26period%3DP1M%26is_express_checkout%3Dtrue",
     growth_enterprise: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=typeformforgrowth&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx"
 };
-
-updateSignupButtons();
