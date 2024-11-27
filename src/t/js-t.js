@@ -387,7 +387,7 @@
         if (entry.isIntersecting) {
           window.trackElementWithAttributes(entry.target);
           if (
-            entry.target.hasAttribute("cc-t-in_view_allow_multipe" === "true")
+            entry.target.hasAttribute("cc-t-in_view_allow_multipe")
           ) {
             return;
           }
