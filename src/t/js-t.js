@@ -411,7 +411,32 @@
 (function linkInterceptorScope() {
   const HOSTNAMES_ALLOWLIST = ["typeform.com"];
   const HOSTNAMES_BLOCKLIST = ["auth.typeform.com"];
+
+  const SEARCH_PARAMS_ALLOWLIST = [
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "tf_source",
+    "tf_medium",
+    "tf_campaign",
+    "tf_term",
+    "tf_content",
+    "referrer",
+    "redirect_uri",
+    window.ATTRIBUTION_ID_GLOBAL_KEY,
+  ];
   const listenersMap = new Map();
+
+  const getCurrentSearchParams = () => {
+    const currentUrl = new URL(window.location.href);
+    const entries = [...currentUrl.searchParams.entries()];
+
+    return entries.filter(([key]) => {
+      return SEARCH_PARAMS_ALLOWLIST.includes(key);
+    });
+  }
 
   const isAllowedHostname = (hostname = "") => {
     const isBlocked = HOSTNAMES_BLOCKLIST.some((hn) => hn === hostname);
@@ -476,6 +501,11 @@
       }
 
       event.preventDefault();
+
+      const currentSearchParams = getCurrentSearchParams();
+      currentSearchParams.forEach(([key, value]) => {
+        destinationUrl.searchParams.set(key, value);
+      });
 
       const attributionUserId = window.getAttributionUserId();
       if (attributionUserId) {
