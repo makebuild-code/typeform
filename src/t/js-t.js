@@ -217,6 +217,19 @@
           location: location,
         });
       },
+      trackContactSales: (url, label, location = "") => {
+        window.trackingHelper.trackItemClicked({
+          item: "contact_sales",
+          item_type: "button",
+          link_url: url,
+          label: window.trackingHelper.snakeCase(label),
+          product: "typeform",
+          plan_name: 'enterprise',
+          plan_code: 'enterprise',
+          pricing_version: 3.1,
+          location: location,
+        });
+      },
       trackPageNavigated: (props) => {
         const documentHeight = document.body.offsetHeight - window.innerHeight;
         const scrollPercentage = window.scrollY / documentHeight;
@@ -425,6 +438,7 @@
     "tf_content",
     "referrer",
     "redirect_uri",
+    "dev",
     window.ATTRIBUTION_ID_GLOBAL_KEY,
   ];
   const listenersMap = new Map();
@@ -470,6 +484,11 @@
     // signup tracking
     if (linkHref && linkHref.includes("signup")) {
       window.trackingHelper.trackSignup(linkHref, linkText || "");
+    }
+
+    // contactSales tracking
+    if (linkHref && linkHref.includes("tfsales.typeform.com/to/PxcVKQGb")) {
+      window.trackingHelper.trackContactSales(linkHref, linkText || "");
     }
 
     window.trackElementWithAttributes(link);

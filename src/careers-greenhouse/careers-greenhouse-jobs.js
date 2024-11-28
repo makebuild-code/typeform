@@ -47,6 +47,11 @@ async function fetchDepartmentJobs() {
             parentContainer.appendChild(jobElement);
         });
 
+        // Dispatch custom event after jobs are loaded
+        window.dispatchEvent(new CustomEvent('greenhouseJobsLoaded', {
+            detail: { jobs: departmentJobs }
+        }));
+
     } catch (error) {
         console.error('Error fetching department jobs:', error);
     }
