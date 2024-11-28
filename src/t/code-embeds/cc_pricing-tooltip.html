@@ -1,0 +1,48 @@
+<!-- Embed on page-->
+<script>
+    (function (window) {
+        console.log('Tooltip script loaded');
+    
+        if (typeof window.initializeTooltips !== 'function') {
+            window.initializeTooltips = function () {
+                console.log('Initializing tooltips');
+                const elements = document.querySelectorAll('[data-tooltip="instance"]');
+                console.log('Found tooltip elements:', elements.length);
+                
+                elements.forEach((element) => {
+                    if (!element._tippy) {
+                        const contentDiv = element.querySelector('div[data-tooltip="content"]');
+                        
+                        if (contentDiv) {
+                            tippy(element, {
+                                content: contentDiv.innerHTML,
+                                allowHTML: true,
+                                interactive: true,
+                                onShow(instance) {
+                                    const featureNameDiv = instance.reference.closest('.pricing-compare_cell')
+                                        ?.querySelector('[cc-t-id="pricing-feature"]');
+                                    const featureName = featureNameDiv?.textContent || 'Unknown feature';
+                                    console.log('Showing tooltip:', featureName);
+                                    
+                                    window.trackingHelper.trackItemClicked({
+                                        item: 'tooltip_features',
+                                        item_type: 'hover',
+                                        label: window.trackingHelper.snakeCase(featureName),
+                                        location: 'grid:plan_features',
+                                        pricing_version: 3.1
+                                    });
+                                }
+                            });
+                        }
+                    }
+                });
+            };
+    
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', window.initializeTooltips);
+            } else {
+                window.initializeTooltips();
+            }
+        }
+    })(window);
+    </script>
