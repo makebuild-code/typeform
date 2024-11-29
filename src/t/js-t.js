@@ -240,6 +240,15 @@
           location_depth: scrollPercentage,
         });
       },
+      trackSearchQueryEntered: (data) => {
+        const props = {
+          ...window.trackingHelper.getMandatoryProperties(),
+          ...data,
+        };
+
+        trackingClient.trackSearchQueryEntered(props);
+        log('search_query_entered', props);
+      },
     };
   }
 
