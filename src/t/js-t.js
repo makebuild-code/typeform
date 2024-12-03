@@ -253,6 +253,8 @@
   }
 
   window.trackingHelper = createTrackingHelper();
+
+  window.dispatchEvent(new Event("tracking-helper:loaded"));
 })();
 
 // Init JS Tracking
