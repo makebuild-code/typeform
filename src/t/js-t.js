@@ -409,14 +409,40 @@
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          window.trackElementWithAttributes(entry.target);
-          if (
-            entry.target.hasAttribute("cc-t-in_view_allow_multipe")
-          ) {
-            return;
+          const delay = entry.target.getAttribute("cc-t-in_view_delay");
+          
+          // If delay attribute exists, wait before tracking
+          if (delay) {
+            const timeoutId = setTimeout(() => {
+              // Only track if element is still in view after delay
+              if (entry.target.getAttribute("data-in-view") === "true") {
+                window.trackElementWithAttributes(entry.target);
+                
+                if (!entry.target.hasAttribute("cc-t-in_view_allow_multipe")) {
+                  observer.unobserve(entry.target);
+                }
+              }
+            }, parseFloat(delay) * 1000); // Convert seconds to milliseconds
+            
+            // Store timeout ID to clear if element leaves view
+            entry.target.setAttribute("data-timeout-id", timeoutId);
+            entry.target.setAttribute("data-in-view", "true");
+          } else {
+            // Original behavior for elements without delay
+            window.trackElementWithAttributes(entry.target);
+            
+            if (!entry.target.hasAttribute("cc-t-in_view_allow_multipe")) {
+              observer.unobserve(entry.target);
+            }
           }
-
-          observer.unobserve(entry.target);
+        } else {
+          // Clear timeout and in-view state when element leaves viewport
+          const timeoutId = entry.target.getAttribute("data-timeout-id");
+          if (timeoutId) {
+            clearTimeout(parseInt(timeoutId));
+            entry.target.removeAttribute("data-timeout-id");
+          }
+          entry.target.setAttribute("data-in-view", "false");
         }
       });
     },
@@ -486,23 +512,33 @@
     const href = linkHref || targetHref;
     const anchorTarget = linkTarget || targetTarget;
 
-    // login tracking
-    if (linkHref && linkHref.includes("login")) {
-      window.trackingHelper.trackLogin(linkHref, linkText || "");
-      console.log("found login");
+    // Check both self and parent for skip attribute
+    const shouldSkipGlobal = 
+      link.getAttribute('cc-t-global-skip') === 'self' || 
+      link.closest('[cc-t-global-skip="children"]') !== null;
+
+    // Only run global helper tracking if neither skip condition is met
+    if (!shouldSkipGlobal) {
+      // login tracking
+      if (linkHref && linkHref.includes("login")) {
+        window.trackingHelper.trackLogin(linkHref, linkText || "");
+        console.log("found login");
+      }
+
+      // signup tracking
+      if (linkHref && linkHref.includes("signup")) {
+        window.trackingHelper.trackSignup(linkHref, linkText || "");
+      }
+
+      // contactSales tracking
+      if (linkHref && linkHref.includes("tfsales.typeform.com/to/PxcVKQGb")) {
+        window.trackingHelper.trackContactSales(linkHref, linkText || "");
+      }
     }
 
-    // signup tracking
-    if (linkHref && linkHref.includes("signup")) {
-      window.trackingHelper.trackSignup(linkHref, linkText || "");
-    }
-
-    // contactSales tracking
-    if (linkHref && linkHref.includes("tfsales.typeform.com/to/PxcVKQGb")) {
-      window.trackingHelper.trackContactSales(linkHref, linkText || "");
-    }
-
+    // Always run attribute-specific tracking
     window.trackElementWithAttributes(link);
+
     if (link.nodeName === "BUTTON") {
       return;
     }
