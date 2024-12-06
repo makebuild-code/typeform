@@ -519,10 +519,9 @@
 
     // Only run global helper tracking if neither skip condition is met
     if (!shouldSkipGlobal) {
-      // login tracking
-      if (linkHref && linkHref.includes("login")) {
+      // login tracking (excluding logout)
+      if (linkHref && linkHref.includes("login") && !linkHref.includes("login/logout")) {
         window.trackingHelper.trackLogin(linkHref, linkText || "");
-        console.log("found login");
       }
 
       // signup tracking
