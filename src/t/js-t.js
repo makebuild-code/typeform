@@ -369,8 +369,13 @@
   window.trackElementWithAttributes = function trackElementWithAttributes(
     element
   ) {
-    const { event, in_view, in_view_allow_multipe, ...trackingData } =
-      getTrackingAttributes(element);
+    const { 
+      event, 
+      in_view, 
+      in_view_allow_multipe, 
+      'global-skip': globalSkip,
+      ...trackingData 
+    } = getTrackingAttributes(element);
 
     if (event === "item_clicked") {
       if (!trackingData.item) {
