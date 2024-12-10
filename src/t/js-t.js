@@ -359,6 +359,10 @@
   function getTrackingAttributes(element) {
     return Array.from(element.attributes).reduce((acc, attr) => {
       if (attr.name.startsWith("cc-t-")) {
+        // Skip utility attributes
+        if (attr.name.startsWith("cc-t-utility-")) {
+          return acc;
+        }
         acc[attr.name.replace("cc-t-", "")] = attr.value;
       }
 
@@ -387,9 +391,9 @@
         ...trackingData,
         link_url: trackingData.link || element.href,
         item_type: trackingData.item_type || "link",
-        label: window.trackingHelper.snakeCase(
-          trackingData.label || element.textContent || ""
-        ),
+        label: element.getAttribute('cc-t-utility-snake_case') === 'off' 
+          ? (trackingData.label || element.textContent || "")
+          : window.trackingHelper.snakeCase(trackingData.label || element.textContent || ""),
       });
 
       return;
