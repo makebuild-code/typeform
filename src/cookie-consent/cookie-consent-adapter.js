@@ -134,9 +134,9 @@
   }
 
   callOneTrustSdk(function setLanguage() {
-    // change this part accoridng to your languge management
-    // locale
-    window?.OneTrust?.changeLanguage?.("en");
+    // detect language from lang attribute
+    const langAttr = document.documentElement.lang;
+    window?.OneTrust?.changeLanguage?.(langAttr);
   });
 
   handleInitialCookieBannerVisibility();
