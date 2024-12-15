@@ -224,8 +224,8 @@
           link_url: url,
           label: window.trackingHelper.snakeCase(label),
           product: "typeform",
-          plan_name: 'enterprise',
-          plan_code: 'enterprise',
+          plan_name: "enterprise",
+          plan_code: "enterprise",
           pricing_version: 3.1,
           location: location,
         });
@@ -247,7 +247,7 @@
         };
 
         trackingClient.trackSearchQueryEntered(props);
-        log('search_query_entered', props);
+        log("search_query_entered", props);
       },
     };
   }
@@ -273,6 +273,10 @@
     const hasPerformanceConsent = consentUtil.hasPerformanceConsent();
 
     if (hasTargetingConsent) {
+      const hasClearbitScript = !!document.getElementById("clearbit");
+      if (hasClearbitScript) {
+        return;
+      }
       const clearbitScript = document.createElement("script");
       clearbitScript.id = "clearbit";
       clearbitScript.innerHTML = `!function(w){var clearbit=w.clearbit=w.clearbit||[];if(!clearbit.initialize)if(clearbit.invoked)w.console&&console.error&&console.error("Clearbit snippet included twice.");else{clearbit.invoked=!0;clearbit.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];clearbit.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);clearbit?.push?.(e);return clearbit}};for(var t=0;t<clearbit.methods.length;t++){var e=clearbit.methods[t];clearbit[e]=clearbit.factory(e)}clearbit.load=function(t){var e=document.createElement("script");e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"x.clearbitjs.com/v1/"+t+"/clearbit.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};clearbit.SNIPPET_VERSION="3.1.0"; clearbit.load("pk_76b17f79dd398468af3f36d637ba1002"); clearbit.page(); }}(window);`;
@@ -373,12 +377,12 @@
   window.trackElementWithAttributes = function trackElementWithAttributes(
     element
   ) {
-    const { 
-      event, 
-      in_view, 
-      in_view_allow_multipe, 
-      'global-skip': globalSkip,
-      ...trackingData 
+    const {
+      event,
+      in_view,
+      in_view_allow_multipe,
+      "global-skip": globalSkip,
+      ...trackingData
     } = getTrackingAttributes(element);
 
     if (event === "item_clicked") {
@@ -391,9 +395,12 @@
         ...trackingData,
         link_url: trackingData.link || element.href,
         item_type: trackingData.item_type || "link",
-        label: element.getAttribute('cc-t-utility-snake_case') === 'off' 
-          ? (trackingData.label || element.textContent || "")
-          : window.trackingHelper.snakeCase(trackingData.label || element.textContent || ""),
+        label:
+          element.getAttribute("cc-t-utility-snake_case") === "off"
+            ? trackingData.label || element.textContent || ""
+            : window.trackingHelper.snakeCase(
+                trackingData.label || element.textContent || ""
+              ),
       });
 
       return;
@@ -419,27 +426,27 @@
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const delay = entry.target.getAttribute("cc-t-in_view_delay");
-          
+
           // If delay attribute exists, wait before tracking
           if (delay) {
             const timeoutId = setTimeout(() => {
               // Only track if element is still in view after delay
               if (entry.target.getAttribute("data-in-view") === "true") {
                 window.trackElementWithAttributes(entry.target);
-                
+
                 if (!entry.target.hasAttribute("cc-t-in_view_allow_multipe")) {
                   observer.unobserve(entry.target);
                 }
               }
             }, parseFloat(delay) * 1000); // Convert seconds to milliseconds
-            
+
             // Store timeout ID to clear if element leaves view
             entry.target.setAttribute("data-timeout-id", timeoutId);
             entry.target.setAttribute("data-in-view", "true");
           } else {
             // Original behavior for elements without delay
             window.trackElementWithAttributes(entry.target);
-            
+
             if (!entry.target.hasAttribute("cc-t-in_view_allow_multipe")) {
               observer.unobserve(entry.target);
             }
@@ -496,7 +503,7 @@
     return entries.filter(([key]) => {
       return SEARCH_PARAMS_ALLOWLIST.includes(key);
     });
-  }
+  };
 
   const isAllowedHostname = (hostname = "") => {
     const isBlocked = HOSTNAMES_BLOCKLIST.some((hn) => hn === hostname);
@@ -522,14 +529,18 @@
     const anchorTarget = linkTarget || targetTarget;
 
     // Check both self and parent for skip attribute
-    const shouldSkipGlobal = 
-      link.getAttribute('cc-t-global-skip') === 'self' || 
+    const shouldSkipGlobal =
+      link.getAttribute("cc-t-global-skip") === "self" ||
       link.closest('[cc-t-global-skip="children"]') !== null;
 
     // Only run global helper tracking if neither skip condition is met
     if (!shouldSkipGlobal) {
       // login tracking (excluding logout)
-      if (linkHref && linkHref.includes("login") && !linkHref.includes("login/logout")) {
+      if (
+        linkHref &&
+        linkHref.includes("login") &&
+        !linkHref.includes("login/logout")
+      ) {
         window.trackingHelper.trackLogin(linkHref, linkText || "");
       }
 
