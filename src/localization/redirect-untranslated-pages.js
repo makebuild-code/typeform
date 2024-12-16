@@ -132,8 +132,11 @@ function disableSpanishLinks() {
     
     currentPath = currentPath.startsWith('/') ? currentPath : '/' + currentPath;
     
-    // Only disable Spanish links for pages not in the allowed list or wildcards
-    if (!SPANISH_PAGES[currentPath] && !matchesWildcard(currentPath)) {
+    const hasSpanishVersion = Object.values(SPANISH_PAGES).some(page => 
+        page.englishPath === currentPath
+    ) || matchesWildcard(currentPath);
+
+    if (!hasSpanishVersion) {
         // Find Spanish language links
         const spanishLinks = document.querySelectorAll('a[hreflang="es"]');
         
