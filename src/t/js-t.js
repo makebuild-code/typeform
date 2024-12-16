@@ -192,6 +192,7 @@
         const trackingProps = {
           ...window.trackingHelper.getMandatoryProperties(),
           item,
+          test_id: "all",
           ...props,
         };
         trackingClient.trackTmpItemClicked(trackingProps);
