@@ -109,14 +109,20 @@ function handleRedirect() {
         }
     }
 
-    // Handle English to Spanish redirects
+    // Handle English slugs in Spanish subfolder
     if (SETTINGS.redirectEnglishToSpanish && currentPath.startsWith('/es/')) {
-        const spanishPage = Object.entries(SPANISH_PAGES).find(([spanishPath, data]) => 
-            data.englishPath === currentPath.replace('/es/', '/') && data.redirectToSpanish
-        );
+        const pathWithoutPrefix = currentPath.replace('/es/', '/');
         
-        if (spanishPage) {
-            window.location.href = getFullUrl(spanishPage[0]);
+        // Only redirect if the current Spanish path doesn't exist in our mapping
+        // but its English version does match a different Spanish path
+        if (!SPANISH_PAGES[currentPath]) {
+            const spanishPage = Object.entries(SPANISH_PAGES).find(([spanishPath, data]) => 
+                data.englishPath === pathWithoutPrefix
+            );
+            
+            if (spanishPage) {
+                window.location.href = getFullUrl(spanishPage[0]);
+            }
         }
     }
 }
@@ -132,11 +138,8 @@ function disableSpanishLinks() {
     
     currentPath = currentPath.startsWith('/') ? currentPath : '/' + currentPath;
     
-    const hasSpanishVersion = Object.values(SPANISH_PAGES).some(page => 
-        page.englishPath === currentPath
-    ) || matchesWildcard(currentPath);
-
-    if (!hasSpanishVersion) {
+    // Only disable Spanish links for pages not in the allowed list or wildcards
+    if (!SPANISH_PAGES[currentPath] && !matchesWildcard(currentPath)) {
         // Find Spanish language links
         const spanishLinks = document.querySelectorAll('a[hreflang="es"]');
         
