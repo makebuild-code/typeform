@@ -104,6 +104,7 @@
     };
 
     return {
+      getViewPageProps: getViewPageProps,
       setPageTrackingProps: (props) => {
         _viewPageProps = {
           ..._viewPageProps,
@@ -289,13 +290,15 @@
 
     if (!hasFunctionalConsent && !hasPageTracked) {
       hasPageTracked = true;
+      const viewPageProps = window.trackingHelper.getViewPageProps();
       fetch("https://www.typeform.com/api/v2/track/page/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          typeformProperty: "public_site",
+          typeformProperty:
+            (viewPageProps && viewPageProps.typeform_property) || "public_site",
           title: document.title,
           url: window.location.href,
           referrer: document.referrer,
