@@ -365,7 +365,7 @@ function initAlgoliaSearch() {
                     try {
                         if (!hit || typeof hit !== 'object') return '';
                         
-                        const isConnect = instanceType === 'connect';
+                        const isConnect = instanceType.startsWith('connect');
                         const localeConfig = getLocaleConfig();
                         const lang = document.documentElement.lang || 'en';
                         const urlPrefixes = getUrlPrefixes(lang);
