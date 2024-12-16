@@ -259,6 +259,8 @@
 
 // Init JS Tracking
 (function jsTrackingInitScope() {
+  let hasPageTracked = false;
+  let hasTrackingInitialized = false;
   function initTracking() {
     // Now you can run following consentUtil check the exact consent.
     // Script tags above adds consentUtil helper to global window
@@ -284,7 +286,8 @@
       document.body.appendChild(clearbitScript);
     }
 
-    if (!hasFunctionalConsent) {
+    if (!hasFunctionalConsent && !hasPageTracked) {
+      hasPageTracked = true;
       fetch("https://www.typeform.com/api/track/page/", {
         method: "POST",
         headers: {
@@ -304,7 +307,11 @@
     }
 
     // For eg. initialize tracking when we have functional consent
-    if (hasFunctionalConsent && !trackingClient.isInitialized("segment")) {
+    if (
+      hasFunctionalConsent &&
+      !trackingClient.isInitialized("segment") &&
+      !hasTrackingInitialized
+    ) {
       attributionUtil.default.generateUser(
         ".typeform.com",
         window.getAttributionUserId()
@@ -324,6 +331,7 @@
         },
         "GTM-WH2ZQ3X" // GTM_ID
       );
+      hasTrackingInitialized = true;
 
       if (!window.analytics) return;
 
