@@ -291,6 +291,7 @@
     if (!hasFunctionalConsent && !hasPageTracked) {
       hasPageTracked = true;
       const viewPageProps = window.trackingHelper.getViewPageProps();
+
       fetch("https://www.typeform.com/api/v2/track/page/", {
         method: "POST",
         headers: {
