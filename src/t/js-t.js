@@ -225,8 +225,6 @@
           item_type: "button",
           link_url: url,
           label: window.trackingHelper.snakeCase(label),
-          plan_name: "enterprise",
-          plan_code: "enterprise",
           pricing_version: "3.1",
           ...(location && { location }),
         });
