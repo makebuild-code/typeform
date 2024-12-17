@@ -206,7 +206,7 @@
           link_url: url,
           label: window.trackingHelper.snakeCase(label),
           product: "typeform",
-          location: location,
+          ...(location && { location }),
         });
       },
       trackSignup: (url, label, location = "") => {
@@ -216,7 +216,7 @@
           link_url: url,
           label: window.trackingHelper.snakeCase(label),
           product: "typeform",
-          location: location,
+          ...(location && { location }),
         });
       },
       trackContactSales: (url, label, location = "") => {
@@ -225,11 +225,10 @@
           item_type: "button",
           link_url: url,
           label: window.trackingHelper.snakeCase(label),
-          product: "typeform",
           plan_name: "enterprise",
           plan_code: "enterprise",
-          pricing_version: 3.1,
-          location: location,
+          pricing_version: "3.1",
+          ...(location && { location }),
         });
       },
       trackPageNavigated: (props) => {
