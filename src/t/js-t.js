@@ -289,8 +289,7 @@
       hasPageTracked = true;
       const viewPageProps = window.trackingHelper.getViewPageProps();
 
-      // fetch("https://www.typeform.com/api/v2/track/page/", {
-      fetch("https://www.typeform.com/api/track/page/", {
+      fetch("https://www.typeform.com/api/v2/track/page/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
