@@ -123,14 +123,18 @@ const LocalizationRedirect = (function() {
         disableSpanishLinks: function() {
             if (!CONFIG.disableUntranslatedLinks) return;
 
-            let currentPath = window.location.pathname;
-            if (currentPath === '/') return;
+            const currentPath = window.location.pathname;
+            const isSpanishPage = currentPath.startsWith('/es/');
             
-            currentPath = currentPath.startsWith('/') ? currentPath : '/' + currentPath;
+            // Always enable language switcher on Spanish pages
+            if (isSpanishPage) return;
+            
+            // For English pages, disable switcher unless there's a Spanish translation
+            const englishPath = currentPath === '/' ? '/' : currentPath.startsWith('/') ? currentPath : '/' + currentPath;
             
             // Check if there's a Spanish translation for the current English path
             const hasSpanishTranslation = Object.values(TRANSLATED_SPANISH_PAGES).some(
-                data => data.englishPath === currentPath
+                data => data.englishPath === englishPath
             );
             
             if (!hasSpanishTranslation && !matchesWildcard(currentPath)) {
