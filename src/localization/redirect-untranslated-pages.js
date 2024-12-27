@@ -128,7 +128,12 @@ const LocalizationRedirect = (function() {
             
             currentPath = currentPath.startsWith('/') ? currentPath : '/' + currentPath;
             
-            if (!TRANSLATED_SPANISH_PAGES[currentPath] && !matchesWildcard(currentPath)) {
+            // Check if there's a Spanish translation for the current English path
+            const hasSpanishTranslation = Object.values(TRANSLATED_SPANISH_PAGES).some(
+                data => data.englishPath === currentPath
+            );
+            
+            if (!hasSpanishTranslation && !matchesWildcard(currentPath)) {
                 const spanishLinks = document.querySelectorAll('a[hreflang="es"]');
                 
                 spanishLinks.forEach(link => {
