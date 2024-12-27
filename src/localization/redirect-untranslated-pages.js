@@ -126,21 +126,25 @@ const LocalizationRedirect = (function() {
             const currentPath = window.location.pathname;
             const isSpanishPage = currentPath.startsWith('/es/');
             
-            // Always enable language switcher on Spanish pages
+            // On Spanish pages, we don't need to disable any links
             if (isSpanishPage) return;
             
-            // For English pages, disable switcher unless there's a Spanish translation
-            const englishPath = currentPath === '/' ? '/' : currentPath.startsWith('/') ? currentPath : '/' + currentPath;
+            // Only run this logic on English pages to disable Spanish links when no translation exists
+            const englishPath = currentPath === '/' ? '/' : currentPath;
             
             // Check if there's a Spanish translation for the current English path
             const hasSpanishTranslation = Object.values(TRANSLATED_SPANISH_PAGES).some(
-                data => data.englishPath === englishPath
+                data => data.englishPath === englishPath && data.redirectToSpanish
             );
             
+            // Only disable Spanish links if we're on an English page AND there's no translation
             if (!hasSpanishTranslation && !matchesWildcard(currentPath)) {
                 const spanishLinks = document.querySelectorAll('a[hreflang="es"]');
-                
                 spanishLinks.forEach(link => {
+                    // Don't disable links that point to existing Spanish pages
+                    const targetPath = new URL(link.href, window.location.origin).pathname;
+                    if (TRANSLATED_SPANISH_PAGES[targetPath]) return;
+                    
                     link.href = '#';
                     link.classList.add('locale-link-disabled');
                     link.style.cursor = 'not-allowed';
