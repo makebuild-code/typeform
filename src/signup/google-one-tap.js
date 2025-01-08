@@ -32,11 +32,11 @@
     const hasTargetingConsent = consentUtil.hasTargetingConsent(); // defined in root level
     const isMobileDevice = isMobile.any; // defined in root level
 
-    if (isVisitorAuthenticated || !hasTargetingConsent) {
+    if (isVisitorAuthenticated) {
       return false;
     }
 
-    if (isMobile.any) {
+    if (isMobileDevice && !hasTargetingConsent) {
       return false;
     }
 

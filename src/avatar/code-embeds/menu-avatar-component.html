@@ -154,7 +154,8 @@ Following cc-targets are used in this script, and they should be attached to the
       .then(([md5ScriptResult, userResult]) => {
         const canUseGravatar = md5ScriptResult.status === 'fulfilled';
         const userInfo = userResult.status === 'fulfilled' && userResult.value;
-        const initials = getInitials(userInfo?.name || userEmail || '').toUpperCase();
+        const userName = userInfo?.name || userInfo?.alias;
+        const initials = getInitials(userName || userEmail || '').toUpperCase();
         const bgGroup = getBgGroupBasedOnLetter(initials[0]);
         const backgroundColor = getBackgroundColorForGroup(bgGroup.name);
 
@@ -173,7 +174,7 @@ Following cc-targets are used in this script, and they should be attached to the
           const dropdownUserNameElement = document.querySelector(dropdownUserNameSelector);
           const dropdownUserEmailElement = document.querySelector(dropdownUserEmailSelector);
 
-          dropdownUserNameElement.textContent = userInfo?.name || userEmail.split('@')[0];
+          dropdownUserNameElement.textContent = userName || userEmail.split('@')[0];
           dropdownUserEmailElement.textContent = userEmail;
 
           avatarElement.appendChild(initialsElement);
