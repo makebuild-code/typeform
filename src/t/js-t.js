@@ -333,11 +333,11 @@
         },
         "GTM-WH2ZQ3X" // GTM_ID
       );
-      hasTrackingInitialized = true;
 
       if (!window.analytics) return;
 
       window.analytics.ready(() => {
+        hasTrackingInitialized = true;
         window.trackingHelper.trackViewPageSection();
 
         if (window.reveal) {
