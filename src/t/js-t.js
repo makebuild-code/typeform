@@ -28,7 +28,7 @@
       },
     },
     {
-      isMatch: () => window.location.pathname === "/connect/c",
+      isMatch: () => window.location.pathname.startsWith("/connect-category"),
       props: {
         typeform_property: "typeform_connect",
         section: "typeform_connect_category_page",
@@ -36,36 +36,25 @@
     },
     {
       isMatch: () => {
-        const [_, section, appSlug, integrationSlug] =
-          window.location.pathname.split("/");
-        if (section !== "/connect/" || !appSlug || !integrationSlug) {
-          return false;
-        }
-
-        return true;
+        const [_, path] = window.location.pathname.split("/");
+        return path === "connect-integration";
       },
       props: () => {
-        const [_, section, appSlug, integrationSlug] =
-          window.location.pathname.split("/");
+        const integrationSlug = window.location.pathname.split("/")[2];
         return {
           typeform_property: "typeform_connect",
           section: "typeform_connect_integration_page",
-          typeform_connect_app: snakeCase(appSlug),
-          typeform_connect_integration: snakeCase(integrationSlug),
+          typeform_connect_integration: integrationSlug,
         };
       },
     },
     {
       isMatch: () => {
-        const [_, section, appSlug, integrationSlug] =
-          window.location.pathname.split("/");
-        if (section !== "/connect/" || !appSlug || !!integrationSlug) {
-          return false;
-        }
-        return true;
+        const [_, path, appSlug] = window.location.pathname.split("/");
+        return path === "connect" && appSlug && appSlug !== "category";
       },
       props: () => {
-        const [_, section, appSlug] = window.location.pathname.split("/");
+        const appSlug = window.location.pathname.split("/")[2];
         return {
           typeform_property: "typeform_connect",
           section: "typeform_connect_app_page",
@@ -74,7 +63,13 @@
       },
     },
     {
-      isMatch: () => window.location.pathname.startsWith("/templates"),
+      isMatch: () => {
+        const path = window.location.pathname;
+        return path === "/templates" || // exact match for landing page
+               path.startsWith("/templates/") ||
+               path.startsWith("/templates-category/") ||
+               path.startsWith("/templates-sub-category/");
+      },
       props: {
         typeform_property: "public_template_gallery",
       },
