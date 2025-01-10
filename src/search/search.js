@@ -46,18 +46,18 @@ const trackCombinedResults = _.debounce(() => {
             location: location
         });
     }
-}, 1000);
+}, 1500);
 
 // Update the logging functions
 const logTemplatesCount = _.debounce((count) => {
     searchState.templatesCount = count;
     trackCombinedResults();
-}, 1000);
+}, 1500);
 
 const logCategoriesCount = _.debounce((count) => {
     searchState.categoriesCount = count;
     trackCombinedResults();
-}, 1000);
+}, 1500);
 
 const logTemplatesStats = _.debounce((count) => {}, 1000);
 
@@ -252,12 +252,23 @@ function initAlgoliaSearch() {
                     }
                 };
                 
-                searchInput.addEventListener('input', (e) => {
-                    const searchValue = e.target.value.trim();
-                    if (searchValue.length > 0) {
-                        refine(searchValue);
+                const debouncedRefine = _.debounce((value) => {
+                    if (value.length >= 2) {
+                        refine(value);
                     } else {
                         clear();
+                    }
+                }, 500);
+                
+                searchInput.addEventListener('input', (e) => {
+                    const searchValue = e.target.value.trim();
+                    if (searchValue.length === 0) {
+                        clear();
+                        if (searchResultsWrapper) {
+                            searchResultsWrapper.style.display = 'none';
+                        }
+                    } else {
+                        debouncedRefine(searchValue);
                     }
                     updateResetButtonVisibility();
                     if (searchResultsWrapper) {
