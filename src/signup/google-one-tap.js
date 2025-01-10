@@ -155,7 +155,7 @@
   }
 
   window.addEventListener("signup-helpers:loaded", () => {
-    console.log("signup-helpers:loaded");
+    //console.log("signup-helpers:loaded");
     const hasTargetingConsent = consentUtil?.hasTargetingConsent?.();
 
     if (hasTargetingConsent) {
