@@ -194,30 +194,30 @@
         trackingClient.trackTmpItemClicked(trackingProps);
         log("tmp_item_clicked", props);
       },
-      trackLogin: (url, label, location = "") => {
+      trackLogin: (url, label, location = "", itemType = "link") => {
         window.trackingHelper.trackItemClicked({
           item: "login",
-          item_type: "link",
+          item_type: itemType,
           link_url: url,
           label: window.trackingHelper.snakeCase(label),
           product: "typeform",
           ...(location && { location }),
         });
       },
-      trackSignup: (url, label, location = "") => {
+      trackSignup: (url, label, location = "", itemType = "link") => {
         window.trackingHelper.trackItemClicked({
           item: "sign_up",
-          item_type: "link",
+          item_type: itemType,
           link_url: url,
           label: window.trackingHelper.snakeCase(label),
           product: "typeform",
           ...(location && { location }),
         });
       },
-      trackContactSales: (url, label, location = "") => {
+      trackContactSales: (url, label, location = "", itemType = "button") => {
         window.trackingHelper.trackItemClicked({
           item: "contact_sales",
-          item_type: "button",
+          item_type: itemType,
           link_url: url,
           label: window.trackingHelper.snakeCase(label),
           pricing_version: "3.1",
@@ -546,17 +546,37 @@
         linkHref.includes("login") &&
         !linkHref.includes("login/logout")
       ) {
-        window.trackingHelper.trackLogin(linkHref, linkText || "");
+        const location = link.getAttribute("cc-t-location") || "";
+        const itemType = link.getAttribute("cc-t-item_type") || "link";
+        window.trackingHelper.trackLogin(linkHref, linkText || "", location, itemType);
       }
 
       // signup tracking
-      if (linkHref && linkHref.includes("signup")) {
-        window.trackingHelper.trackSignup(linkHref, linkText || "");
+      const getSignupUrls = () => {
+        const domains = [
+          'www.typeform.com',
+          'www.web-team.tfdev.typeform.com/',
+          'admin.typeform.com'
+        ];
+        
+        return domains.flatMap(domain => [
+          `https://${domain}/signup/`,
+          `https://${domain}/signup`
+        ]).concat(['/signup/', '/signup']); // Include relative paths
+      };
+
+      const signupUrls = getSignupUrls();
+      if (linkHref && signupUrls.includes(linkHref)) {
+        const location = link.getAttribute("cc-t-location") || "";
+        const itemType = link.getAttribute("cc-t-item_type") || "link";
+        window.trackingHelper.trackSignup(linkHref, linkText || "", location, itemType);
       }
 
       // contactSales tracking
       if (linkHref && linkHref.includes("tfsales.typeform.com/to/PxcVKQGb")) {
-        window.trackingHelper.trackContactSales(linkHref, linkText || "");
+        const location = link.getAttribute("cc-t-location") || "";
+        const itemType = link.getAttribute("cc-t-item_type") || "button";
+        window.trackingHelper.trackContactSales(linkHref, linkText || "", location, itemType);
       }
     }
 
