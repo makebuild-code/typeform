@@ -40,11 +40,17 @@ const trackCombinedResults = _.debounce(() => {
             }
         }
         
-        window.trackingHelper.trackSearchQueryEntered({
+        const trackingData = {
             search_query: window.trackingHelper.snakeCase(query),
-            number_of_results: totalCount,
-            location: location
-        });
+            number_of_results: totalCount
+        };
+
+        // Only add location if it's not empty
+        if (location) {
+            trackingData.location = location;
+        }
+
+        window.trackingHelper.trackSearchQueryEntered(trackingData);
     }
 }, 1500);
 
@@ -441,7 +447,7 @@ function handleSearchResultInteraction(searchResult, action) {
     const jetboostSearchQuery = searchInput ? searchInput.value : '';
 
     const algoliaElement = document.querySelector('.algolia-search[cc-algolia-instance]');
-    let location = 'templates_home';
+    let location = '';
     
     if (algoliaElement) {
         const instanceType = algoliaElement.getAttribute('cc-algolia-instance');
@@ -459,16 +465,22 @@ function handleSearchResultInteraction(searchResult, action) {
     }
 
     if (window.trackingHelper) {
-        window.trackingHelper.trackItemClicked({
+        const trackingData = {
             item: 'search_result',
             link_url: searchResult.href,
             label: window.trackingHelper.snakeCase(jetboostSearchQuery),
             value: window.trackingHelper.snakeCase(titleText),
             search_result_clicked: window.trackingHelper.snakeCase(titleText),
             position_selected: `${position}/${totalResults}`,
-            action: action,
-            location: location
-        });
+            action: action
+        };
+
+        // Only add location if it's not empty
+        if (location) {
+            trackingData.location = location;
+        }
+
+        window.trackingHelper.trackItemClicked(trackingData);
     }
 }
 
