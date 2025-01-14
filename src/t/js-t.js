@@ -120,6 +120,9 @@
 
         return words.map((value) => value.toLowerCase()).join("_");
       },
+      getTypeformVersion: () => {
+        return isMobile.any ? "mobile" : "v2";
+      },
       getPage: () => {
         return window.location.origin + window.location.pathname;
       },
@@ -127,7 +130,7 @@
         const viewPageProps = getViewPageProps();
         return {
           category: "public_site",
-          typeform_version: isMobile.any ? "mobile" : "v2",
+          typeform_version: window.trackingHelper.getTypeformVersion(),
           unique_pageview_id: uuidv4(),
           unique_sectionview_id: uuidv4(),
           attribution_user_id: window.getAttributionUserId(),
@@ -296,7 +299,7 @@
           url: window.location.href,
           referrer: document.referrer,
           userAgent: navigator.userAgent,
-          typeformVersion: "v2",
+          typeformVersion: window.trackingHelper.getTypeformVersion(),
           attributionUserId: window.getAttributionUserId(),
           locale: navigator.language,
         }),
