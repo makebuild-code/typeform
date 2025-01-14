@@ -369,7 +369,7 @@
 (function initTrackingWithAttributesHelper() {
   // cc-t- prefixed attributes are used to for custom properties while tracking events
   function getTrackingAttributes(element) {
-    return Array.from(element.attributes).reduce((acc, attr) => {
+    const attributes = Array.from(element.attributes).reduce((acc, attr) => {
       if (attr.name.startsWith("cc-t-")) {
         // Skip utility attributes
         if (attr.name.startsWith("cc-t-utility-")) {
@@ -377,9 +377,18 @@
         }
         acc[attr.name.replace("cc-t-", "")] = attr.value;
       }
-
       return acc;
     }, {});
+
+    // Only look for parent section if this is an item_clicked event or has event tracking
+    if (!attributes.location && (attributes.item || attributes.event)) {
+      const parentSection = element.closest('section[id]');
+      if (parentSection && parentSection.id) {
+        attributes.location = parentSection.id;
+      }
+    }
+
+    return attributes;
   }
 
   window.trackElementWithAttributes = function trackElementWithAttributes(
