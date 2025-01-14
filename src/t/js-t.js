@@ -555,7 +555,7 @@
       const getSignupUrls = () => {
         const domains = [
           'www.typeform.com',
-          'www.web-team.tfdev.typeform.com/',
+          'www.web-team.tfdev.typeform.com',
           'admin.typeform.com'
         ];
         
