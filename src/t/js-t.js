@@ -283,7 +283,7 @@
       document.body.appendChild(clearbitScript);
     }
 
-    if (!hasFunctionalConsent && !hasPageTracked) {
+    if (!hasPerformanceConsent && !hasPageTracked) {
       hasPageTracked = true;
       const viewPageProps = window.trackingHelper.getViewPageProps();
 
@@ -308,7 +308,7 @@
 
     // For eg. initialize tracking when we have functional consent
     if (
-      hasFunctionalConsent &&
+      hasPerformanceConsent &&
       !trackingClient.isInitialized("segment") &&
       !hasTrackingInitialized
     ) {
@@ -325,8 +325,6 @@
         {
           integrations: {
             All: true,
-            Amplitude: hasPerformanceConsent,
-            "Actions Amplitude": hasPerformanceConsent,
           },
         },
         "GTM-WH2ZQ3X" // GTM_ID
