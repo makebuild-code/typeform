@@ -52,18 +52,18 @@ const trackCombinedResults = _.debounce(() => {
 
         window.trackingHelper.trackSearchQueryEntered(trackingData);
     }
-}, 1500);
+}, 3000);
 
 // Update the logging functions
 const logTemplatesCount = _.debounce((count) => {
     searchState.templatesCount = count;
     trackCombinedResults();
-}, 1500);
+}, 3000);
 
 const logCategoriesCount = _.debounce((count) => {
     searchState.categoriesCount = count;
     trackCombinedResults();
-}, 1500);
+}, 3000);
 
 const logTemplatesStats = _.debounce((count) => {}, 1000);
 
@@ -223,8 +223,54 @@ function initAlgoliaSearch() {
             if (isFirstRender) {
                 const searchInput = document.querySelector('input[cc-t-id="jetboost-search"]');
                 const searchResultsWrapper = document.querySelector('.search-results_wrap');
+                const searchSpinner = document.querySelector('.search-bar_spinner');
                 const resetButton = document.querySelector('[algolia-search-function="reset"]');
                 
+                const debouncedRefine = _.debounce((value) => {
+                    if (value.length >= 3) {
+                        refine(value);
+                    } else {
+                        clear();
+                    }
+                }, 750);
+
+                // Add a listener for when the search completes
+                const hideSpinner = _.debounce(() => {
+                    if (searchSpinner) {
+                        searchSpinner.style.display = 'none';
+                    }
+                }, 1000);
+
+                searchInput.addEventListener('input', (e) => {
+                    const searchValue = e.target.value.trim();
+                    
+                    // Show spinner when typing starts
+                    if (searchValue.length > 0 && searchSpinner) {
+                        searchSpinner.style.display = 'block';
+                    }
+
+                    if (searchValue.length === 0) {
+                        clear();
+                        if (searchSpinner) searchSpinner.style.display = 'none';
+                        if (searchResultsWrapper) {
+                            searchResultsWrapper.style.display = 'none';
+                        }
+                    } else if (searchValue.length < 3) {
+                        if (searchResultsWrapper) {
+                            searchResultsWrapper.style.display = 'none';
+                        }
+                    } else {
+                        debouncedRefine(searchValue);
+                        // Schedule hiding of spinner
+                        hideSpinner();
+                    }
+                    
+                    updateResetButtonVisibility();
+                    if (searchResultsWrapper) {
+                        searchResultsWrapper.style.display = searchValue.length >= 3 ? 'block' : 'none';
+                    }
+                });
+
                 document.querySelectorAll('[algolia-search-function="clear"]').forEach(clearButton => {
                     clearButton.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -258,30 +304,6 @@ function initAlgoliaSearch() {
                     }
                 };
                 
-                const debouncedRefine = _.debounce((value) => {
-                    if (value.length >= 2) {
-                        refine(value);
-                    } else {
-                        clear();
-                    }
-                }, 500);
-                
-                searchInput.addEventListener('input', (e) => {
-                    const searchValue = e.target.value.trim();
-                    if (searchValue.length === 0) {
-                        clear();
-                        if (searchResultsWrapper) {
-                            searchResultsWrapper.style.display = 'none';
-                        }
-                    } else {
-                        debouncedRefine(searchValue);
-                    }
-                    updateResetButtonVisibility();
-                    if (searchResultsWrapper) {
-                        searchResultsWrapper.style.display = searchValue ? 'block' : 'none';
-                    }
-                });
-                
                 if (resetButton) {
                     resetButton.addEventListener('click', () => {
                         searchInput.value = '';
@@ -294,6 +316,12 @@ function initAlgoliaSearch() {
                 }
                 
                 updateResetButtonVisibility();
+            }
+
+            // Update the input value when the query changes
+            const searchInput = document.querySelector('input[cc-t-id="jetboost-search"]');
+            if (searchInput && query !== searchInput.value) {
+                searchInput.value = query;
             }
         }
     )();
