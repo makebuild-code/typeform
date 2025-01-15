@@ -270,6 +270,9 @@
 
     // Performance Consent
     const hasPerformanceConsent = consentUtil.hasPerformanceConsent();
+    const hasConsentCookie = consentUtil.hasConsentCookie();
+
+    const canInitializeTracking = hasConsentCookie && hasPerformanceConsent;
 
     if (hasTargetingConsent && !document.getElementById("clearbit")) {
       const clearbitScript = document.createElement("script");
@@ -279,7 +282,7 @@
       document.body.appendChild(clearbitScript);
     }
 
-    if (!hasPerformanceConsent && !hasPageTracked) {
+    if (!canInitializeTracking && !hasPageTracked) {
       hasPageTracked = true;
       const viewPageProps = window.trackingHelper.getViewPageProps();
 
@@ -304,7 +307,7 @@
 
     // For eg. initialize tracking when we have functional consent
     if (
-      hasPerformanceConsent &&
+      canInitializeTracking &&
       !trackingClient.isInitialized("segment") &&
       !hasTrackingInitialized
     ) {
