@@ -358,7 +358,27 @@
       });
     }
   }
+
+  function handleRejectCookies() {
+    window.deleteNonStrictlyNecessaryCookies;
+    window.window.cookiesUtil.deleteNonStrictlyNecessaryCookies();
+
+    // Cello attribution library sets all of its cookies twice for both .typeform.com and www.typeform.com domain
+    // .typeform.com cookies can be deleted via js-tracking util but not www.typeform.com domain cookies.
+    // Therefore, we need to delete cello related cookies our selves without touching other ones.
+    // We have raised the issue to Cello and we will clean this code when they fix this issue on their side
+    const allLeftOverCookies = Object.keys(Cookies.get());
+    const celloCookies = allLeftOverCookies.filter((cookie) =>
+      cookie.includes("cello-")
+    );
+
+    celloCookies.forEach((celloCookie) => {
+      Cookies.remove(celloCookie);
+    });
+  }
+
   window.addEventListener("OneTrustGroupsUpdated", initTracking);
+  window.addEventListener("oneTrustCookiesRejected", handleRejectCookies);
   initTracking();
 })();
 
