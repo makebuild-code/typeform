@@ -360,7 +360,7 @@
   }
 
   function handleRejectCookies() {
-    window.cookiesUtil.deleteNonStrictlyNecessaryCookies();
+    window.cookiesUtil.deleteAllNonStrictlyNecessaryCookies();
 
     // Cello attribution library sets all of its cookies twice for both .typeform.com and www.typeform.com domain
     // .typeform.com cookies can be deleted via js-tracking util but not www.typeform.com domain cookies.
