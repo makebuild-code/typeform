@@ -79,7 +79,7 @@ function getSearchInstance(algoliaElement) {
 
 function getIndicesForContext(context) {
     return {
-        primary: context === 'connect' ? 'crawled_connect-unified' : 'crawled_templates-unified',
+        primary: context === 'connect' ? 'csv_connect-unified' : 'csv_templates-unified',
         categories: null
     };
 }
@@ -111,6 +111,15 @@ function initAlgoliaSearch() {
         '87a42220f4ea090a907ad412e0f52d60'
     );
 
+    // Add middleware to log API calls
+    const searchClientWithLogging = {
+        ...searchClient,
+        search(requests) {
+            console.log('Algolia API Call:', requests);
+            return searchClient.search(requests);
+        }
+    };
+
     function getLocaleConfig() {
         const lang = document.documentElement.lang || 'en';
         
@@ -118,32 +127,32 @@ function initAlgoliaSearch() {
             templates: {
                 en: {
                     titleField: 'title',
-                    slugField: 'Slug'
+                    slugField: 'slug'
                 },
                 es: {
                     titleField: 'title',
-                    slugField: 'ES_Slug'
+                    slugField: 'slug'
                 }
             },
             connect: {
                 en: {
-                    titleField: 'Name 2',
-                    slugField: 'Slug'
+                    titleField: 'title',
+                    slugField: 'slug'
                 },
                 es: {
-                    titleField: 'Name 2',
-                    slugField: 'Slug'
+                    titleField: 'title',
+                    slugField: 'slug'
                 }
             }
         }[context]?.[lang] || {
-            titleField: context === 'connect' ? 'Name 2' : 'title',
-            slugField: 'Slug'
+            titleField: context === 'connect' ? 'title' : 'title',
+            slugField: 'slug'
         };
     }
 
     const searchConfig = {
         connect: {
-            searchableAttributes: ['Name 2'],
+            searchableAttributes: ['title'],
             urlPrefix: '/connect/'
         },
         templates: {
@@ -154,7 +163,7 @@ function initAlgoliaSearch() {
 
     const primarySearch = instantsearch({
         indexName: primaryIndex,
-        searchClient,
+        searchClient: searchClientWithLogging,
         searchParameters: {
             analytics: false,
             clickAnalytics: false,
@@ -162,7 +171,13 @@ function initAlgoliaSearch() {
             getRankingInfo: false,
             searchableAttributes: searchConfig.searchableAttributes
         },
-        insights: false
+        insights: false,
+        searchFunction(helper) {
+            // Only perform search if there's a query
+            if (helper.state.query && helper.state.query.length >= 3) {
+                helper.search();
+            }
+        }
     });
 
     function getStatsContainerId(context, isCategories = false) {
@@ -196,36 +211,47 @@ function initAlgoliaSearch() {
                 const searchInput = document.querySelector('input[cc-t-id="jetboost-search"]');
                 const searchResultsWrapper = document.querySelector('.search-results_wrap');
                 const searchSpinner = document.querySelector('.search-bar_spinner');
+                const searchLoadingBar = document.querySelector('.search-bar_loading-bar');
                 const resetButton = document.querySelector('[algolia-search-function="reset"]');
                 
                 const debouncedRefine = _.debounce((value) => {
                     if (value.length >= 3) {
                         refine(value);
-                    } else {
-                        clear();
                     }
                 }, 750);
 
-                // Add a listener for when the search completes
-                const hideSpinner = _.debounce(() => {
+                const hideLoadingStates = _.debounce(() => {
                     if (searchSpinner) {
                         searchSpinner.style.display = 'none';
+                    }
+                    if (searchLoadingBar) {
+                        searchLoadingBar.style.display = 'none';
                     }
                 }, 1000);
 
                 searchInput.addEventListener('input', (e) => {
                     const searchValue = e.target.value.trim();
                     
-                    // Show spinner when typing starts
-                    if (searchValue.length > 0 && searchSpinner) {
-                        searchSpinner.style.display = 'block';
+                    // Show loading states when typing starts
+                    if (searchValue.length > 0) {
+                        if (searchSpinner) {
+                            searchSpinner.style.display = 'block';
+                        }
+                        if (searchLoadingBar) {
+                            searchLoadingBar.style.display = 'block';
+                        }
                     }
 
                     if (searchValue.length === 0) {
-                        clear();
-                        if (searchSpinner) searchSpinner.style.display = 'none';
+                        // Hide everything when input is empty
                         if (searchResultsWrapper) {
                             searchResultsWrapper.style.display = 'none';
+                        }
+                        if (searchSpinner) {
+                            searchSpinner.style.display = 'none';
+                        }
+                        if (searchLoadingBar) {
+                            searchLoadingBar.style.display = 'none';
                         }
                     } else if (searchValue.length < 3) {
                         if (searchResultsWrapper) {
@@ -233,23 +259,28 @@ function initAlgoliaSearch() {
                         }
                     } else {
                         debouncedRefine(searchValue);
-                        // Schedule hiding of spinner
-                        hideSpinner();
+                        hideLoadingStates();
+                        if (searchResultsWrapper) {
+                            searchResultsWrapper.style.display = 'block';
+                        }
                     }
                     
                     updateResetButtonVisibility();
-                    if (searchResultsWrapper) {
-                        searchResultsWrapper.style.display = searchValue.length >= 3 ? 'block' : 'none';
-                    }
                 });
 
+                // Update clear/reset handlers to hide loading states too
                 document.querySelectorAll('[algolia-search-function="clear"]').forEach(clearButton => {
                     clearButton.addEventListener('click', (e) => {
                         e.preventDefault();
                         searchInput.value = '';
-                        clear();
                         if (searchResultsWrapper) {
                             searchResultsWrapper.style.display = 'none';
+                        }
+                        if (searchSpinner) {
+                            searchSpinner.style.display = 'none';
+                        }
+                        if (searchLoadingBar) {
+                            searchLoadingBar.style.display = 'none';
                         }
                         updateResetButtonVisibility();
                     });
@@ -258,7 +289,7 @@ function initAlgoliaSearch() {
                 searchInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') {
                         searchInput.value = '';
-                        clear();
+                        // Just hide results, don't trigger a search
                         if (searchResultsWrapper) {
                             searchResultsWrapper.style.display = 'none';
                         }
@@ -279,9 +310,14 @@ function initAlgoliaSearch() {
                 if (resetButton) {
                     resetButton.addEventListener('click', () => {
                         searchInput.value = '';
-                        clear();
                         if (searchResultsWrapper) {
                             searchResultsWrapper.style.display = 'none';
+                        }
+                        if (searchSpinner) {
+                            searchSpinner.style.display = 'none';
+                        }
+                        if (searchLoadingBar) {
+                            searchLoadingBar.style.display = 'none';
                         }
                         updateResetButtonVisibility();
                     });
@@ -290,9 +326,9 @@ function initAlgoliaSearch() {
                 updateResetButtonVisibility();
             }
 
-            // Update the input value when the query changes
+            // Only update input value if it's different and not empty
             const searchInput = document.querySelector('input[cc-t-id="jetboost-search"]');
-            if (searchInput && query !== searchInput.value) {
+            if (searchInput && query !== searchInput.value && query) {
                 searchInput.value = query;
             }
         }
@@ -315,9 +351,12 @@ function initAlgoliaSearch() {
             container: `[algolia-search-function="results"][algolia-search-id="${getHitsContainerId(context)}"] .search-results_list`,
             transformItems(items) {
                 if (!items || !Array.isArray(items)) return [];
-                const nonCategoryItems = items.filter(item => item.category !== 'template_category' && item.category !== 'connect_category');
-                logTemplatesCount(nonCategoryItems.length);
-                return nonCategoryItems;
+                const lang = document.documentElement.lang || 'en';
+                const filteredItems = items
+                    .filter(item => item.category !== 'template_category' && item.category !== 'connect_category')
+                    .filter(item => !item.language || item.language === lang);
+                logTemplatesCount(filteredItems.length);
+                return filteredItems;
             },
             templates: {
                 item(hit, { html, components }) {
@@ -327,7 +366,6 @@ function initAlgoliaSearch() {
                         const isConnect = context === 'connect';
                         
                         if (!hit || !hit.slug || !hit.title) return '';
-                        if (hit.language && hit.language !== lang) return '';
                         
                         const url = isConnect 
                             ? `${urlPrefixes.connect}${hit.slug}`
@@ -351,11 +389,23 @@ function initAlgoliaSearch() {
                         return '';
                     }
                 },
-                empty: ({ query }, { html }) => html`
-                    <div class="search-results_no-results">
-                        <p class="text-sm u-text-bold">No results found</p>
-                    </div>
-                `
+                empty: ({ results }, { html }) => {
+                    // Check if there were any hits before language filtering
+                    const totalHits = results?.hits?.length || 0;
+                    const lang = document.documentElement.lang || 'en';
+                    const hitsInCurrentLang = results?.hits?.filter(hit => !hit.language || hit.language === lang).length || 0;
+                    
+                    // Only show "no results" if there were no hits at all,
+                    // or if there were hits but none in the current language
+                    if (totalHits === 0 || (totalHits > 0 && hitsInCurrentLang === 0)) {
+                        return html`
+                            <div class="search-results_no-results">
+                                <p class="text-sm u-text-bold">No results found</p>
+                            </div>
+                        `;
+                    }
+                    return '';
+                }
             }
         }),
         // Categories hits widget
@@ -363,11 +413,10 @@ function initAlgoliaSearch() {
             container: '#hits-2',
             transformItems(items) {
                 if (!items || !Array.isArray(items)) return [];
-                const categoryItems = items.filter(item => {
-                    return context === 'connect' 
-                        ? item.category === 'connect_category'
-                        : item.category === 'template_category';
-                });
+                const lang = document.documentElement.lang || 'en';
+                const categoryItems = items
+                    .filter(item => context === 'connect' ? item.category === 'connect_category' : item.category === 'template_category')
+                    .filter(item => !item.language || item.language === lang);
                 logCategoriesCount(categoryItems.length);
                 return categoryItems;
             },
@@ -379,7 +428,6 @@ function initAlgoliaSearch() {
                         const isConnect = context === 'connect';
                         
                         if (!hit || !hit.slug || !hit.title) return '';
-                        if (hit.language && hit.language !== lang) return '';
                         
                         const url = isConnect 
                             ? `${urlPrefixes.connectCategory}${hit.slug}`
@@ -403,11 +451,23 @@ function initAlgoliaSearch() {
                         return '';
                     }
                 },
-                empty: ({ query }, { html }) => html`
-                    <div class="search-results_no-results">
-                        <p class="text-sm u-text-bold">No results found</p>
-                    </div>
-                `
+                empty: ({ results }, { html }) => {
+                    // Check if there were any hits before language filtering
+                    const totalHits = results?.hits?.length || 0;
+                    const lang = document.documentElement.lang || 'en';
+                    const hitsInCurrentLang = results?.hits?.filter(hit => !hit.language || hit.language === lang).length || 0;
+                    
+                    // Only show "no results" if there were no hits at all,
+                    // or if there were hits but none in the current language
+                    if (totalHits === 0 || (totalHits > 0 && hitsInCurrentLang === 0)) {
+                        return html`
+                            <div class="search-results_no-results">
+                                <p class="text-sm u-text-bold">No results found</p>
+                            </div>
+                        `;
+                    }
+                    return '';
+                }
             }
         })
     ]);
