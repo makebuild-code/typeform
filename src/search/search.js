@@ -52,18 +52,18 @@ const trackCombinedResults = _.debounce(() => {
 
         window.trackingHelper.trackSearchQueryEntered(trackingData);
     }
-}, 3000);
+}, 250);
 
 // Update the logging functions
 const logTemplatesCount = _.debounce((count) => {
     searchState.templatesCount = count;
     trackCombinedResults();
-}, 3000);
+}, 500);
 
 const logCategoriesCount = _.debounce((count) => {
     searchState.categoriesCount = count;
     trackCombinedResults();
-}, 3000);
+}, 500);
 
 const logTemplatesStats = _.debounce((count) => {}, 1000);
 
@@ -79,8 +79,8 @@ function getSearchInstance(algoliaElement) {
 
 function getIndicesForContext(context) {
     return {
-        primary: context === 'connect' ? 'connect_apps_upload' : 'templates_upload',
-        categories: context === 'connect' ? 'connect_categories_upload' : 'template_categories_upload'
+        primary: context === 'connect' ? 'csv_connect-unified' : 'csv_templates-unified',
+        categories: null
     };
 }
 
@@ -111,71 +111,79 @@ function initAlgoliaSearch() {
         '87a42220f4ea090a907ad412e0f52d60'
     );
 
+    // Add middleware to log API calls
+    const searchClientWithLogging = {
+        ...searchClient,
+        search(requests) {
+            return searchClient.search(requests);
+        }
+    };
+
     function getLocaleConfig() {
         const lang = document.documentElement.lang || 'en';
         
         return {
             templates: {
                 en: {
-                    titleField: 'Title',
-                    slugField: 'Slug'
+                    titleField: 'title',
+                    slugField: 'slug'
                 },
                 es: {
-                    titleField: 'ES_Title',
-                    slugField: 'ES_Slug'
+                    titleField: 'title',
+                    slugField: 'slug'
                 }
             },
             connect: {
                 en: {
-                    titleField: 'Name 2',
-                    slugField: 'Slug'
+                    titleField: 'title',
+                    slugField: 'slug'
                 },
                 es: {
-                    titleField: 'Name 2',
-                    slugField: 'Slug'
+                    titleField: 'title',
+                    slugField: 'slug'
                 }
             }
         }[context]?.[lang] || {
-            titleField: context === 'connect' ? 'Name 2' : 'Title',
-            slugField: 'Slug'
+            titleField: context === 'connect' ? 'title' : 'title',
+            slugField: 'slug'
         };
     }
 
     const searchConfig = {
         connect: {
-            searchableAttributes: ['Name 2'],
+            searchableAttributes: ['title', 'slug', 'description', 'keywords', 'category_titles'],
             urlPrefix: '/connect/'
         },
         templates: {
-            searchableAttributes: [getLocaleConfig().titleField],
+            searchableAttributes: ['title', 'slug', 'description', 'keywords', 'category_titles'],
             urlPrefix: '/templates/'
         }
     }[context];
 
     const primarySearch = instantsearch({
         indexName: primaryIndex,
-        searchClient,
+        searchClient: searchClientWithLogging,
         searchParameters: {
             analytics: false,
             clickAnalytics: false,
             enablePersonalization: false,
             getRankingInfo: false,
-            searchableAttributes: searchConfig.searchableAttributes
+            searchableAttributes: searchConfig.searchableAttributes,
+            typoTolerance: true,
+            minWordSizefor1Typo: 3,
+            minWordSizefor2Typos: 7,
+            hitsPerPage: 100,
+            maxValuesPerFacet: 100,
+            distinct: true,
+            attributesToRetrieve: ['*']
         },
-        insights: false
-    });
-
-    const secondarySearch = instantsearch({
-        indexName: categoriesIndex,
-        searchClient,
-        searchParameters: {
-            analytics: false,
-            clickAnalytics: false,
-            enablePersonalization: false,
-            getRankingInfo: false,
-            searchableAttributes: searchConfig.searchableAttributes
-        },
-        insights: false
+        insights: false,
+        searchFunction(helper) {
+            helper.setQueryParameter('hitsPerPage', 100);  // Force hitsPerPage here
+            if (helper.state.query && helper.state.query.length >= 3) {
+                helper.search();
+            }
+        }
     });
 
     function getStatsContainerId(context, isCategories = false) {
@@ -201,21 +209,6 @@ function initAlgoliaSearch() {
         }),
     ]);
 
-    secondarySearch.addWidgets([
-        instantsearch.widgets.stats({
-            container: `[algolia-search-function='stats'][algolia-search-id='${getStatsContainerId(context, true)}']`,
-            templates: {
-                text: (data) => {
-                    if (!data || typeof data.nbHits === 'undefined') {
-                        return '';
-                    }
-                    logCategoriesStats(data.nbHits);
-                    return '';
-                },
-            },
-        }),
-    ]);
-
     const createVirtualSearchBox = () => instantsearch.connectors.connectSearchBox(
         (renderOptions, isFirstRender) => {
             const { refine, clear, query } = renderOptions;
@@ -224,60 +217,69 @@ function initAlgoliaSearch() {
                 const searchInput = document.querySelector('input[cc-t-id="jetboost-search"]');
                 const searchResultsWrapper = document.querySelector('.search-results_wrap');
                 const searchSpinner = document.querySelector('.search-bar_spinner');
+                const searchLoadingBar = document.querySelector('.search-bar_loading-bar');
                 const resetButton = document.querySelector('[algolia-search-function="reset"]');
                 
                 const debouncedRefine = _.debounce((value) => {
                     if (value.length >= 3) {
                         refine(value);
-                    } else {
-                        clear();
                     }
                 }, 750);
 
-                // Add a listener for when the search completes
-                const hideSpinner = _.debounce(() => {
+                const hideLoadingStates = _.debounce(() => {
                     if (searchSpinner) {
                         searchSpinner.style.display = 'none';
+                    }
+                    if (searchLoadingBar) {
+                        searchLoadingBar.style.display = 'none';
                     }
                 }, 1000);
 
                 searchInput.addEventListener('input', (e) => {
                     const searchValue = e.target.value.trim();
                     
-                    // Show spinner when typing starts
-                    if (searchValue.length > 0 && searchSpinner) {
-                        searchSpinner.style.display = 'block';
-                    }
-
-                    if (searchValue.length === 0) {
-                        clear();
-                        if (searchSpinner) searchSpinner.style.display = 'none';
-                        if (searchResultsWrapper) {
-                            searchResultsWrapper.style.display = 'none';
+                    // Show loading states only when we'll actually perform a search
+                    if (searchValue.length >= 3) {
+                        if (searchSpinner) {
+                            searchSpinner.style.display = 'block';
                         }
-                    } else if (searchValue.length < 3) {
+                        if (searchLoadingBar) {
+                            searchLoadingBar.style.display = 'block';
+                        }
+                        debouncedRefine(searchValue);
+                        hideLoadingStates();
                         if (searchResultsWrapper) {
-                            searchResultsWrapper.style.display = 'none';
+                            searchResultsWrapper.style.display = 'block';
                         }
                     } else {
-                        debouncedRefine(searchValue);
-                        // Schedule hiding of spinner
-                        hideSpinner();
+                        // Hide loading states and results for < 3 characters
+                        if (searchSpinner) {
+                            searchSpinner.style.display = 'none';
+                        }
+                        if (searchLoadingBar) {
+                            searchLoadingBar.style.display = 'none';
+                        }
+                        if (searchResultsWrapper) {
+                            searchResultsWrapper.style.display = 'none';
+                        }
                     }
                     
                     updateResetButtonVisibility();
-                    if (searchResultsWrapper) {
-                        searchResultsWrapper.style.display = searchValue.length >= 3 ? 'block' : 'none';
-                    }
                 });
 
+                // Update clear/reset handlers to hide loading states too
                 document.querySelectorAll('[algolia-search-function="clear"]').forEach(clearButton => {
                     clearButton.addEventListener('click', (e) => {
                         e.preventDefault();
                         searchInput.value = '';
-                        clear();
                         if (searchResultsWrapper) {
                             searchResultsWrapper.style.display = 'none';
+                        }
+                        if (searchSpinner) {
+                            searchSpinner.style.display = 'none';
+                        }
+                        if (searchLoadingBar) {
+                            searchLoadingBar.style.display = 'none';
                         }
                         updateResetButtonVisibility();
                     });
@@ -286,7 +288,7 @@ function initAlgoliaSearch() {
                 searchInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') {
                         searchInput.value = '';
-                        clear();
+                        // Just hide results, don't trigger a search
                         if (searchResultsWrapper) {
                             searchResultsWrapper.style.display = 'none';
                         }
@@ -307,9 +309,14 @@ function initAlgoliaSearch() {
                 if (resetButton) {
                     resetButton.addEventListener('click', () => {
                         searchInput.value = '';
-                        clear();
                         if (searchResultsWrapper) {
                             searchResultsWrapper.style.display = 'none';
+                        }
+                        if (searchSpinner) {
+                            searchSpinner.style.display = 'none';
+                        }
+                        if (searchLoadingBar) {
+                            searchLoadingBar.style.display = 'none';
                         }
                         updateResetButtonVisibility();
                     });
@@ -318,16 +325,15 @@ function initAlgoliaSearch() {
                 updateResetButtonVisibility();
             }
 
-            // Update the input value when the query changes
+            // Only update input value if it's different and not empty
             const searchInput = document.querySelector('input[cc-t-id="jetboost-search"]');
-            if (searchInput && query !== searchInput.value) {
+            if (searchInput && query !== searchInput.value && query) {
                 searchInput.value = query;
             }
         }
     )();
 
     const primaryVirtualSearchBox = createVirtualSearchBox();
-    const secondaryVirtualSearchBox = createVirtualSearchBox();
 
     function getHitsContainerId(context, isCategories = false) {
         if (context === 'connect') {
@@ -339,128 +345,144 @@ function initAlgoliaSearch() {
 
     primarySearch.addWidgets([
         primaryVirtualSearchBox,
+        instantsearch.widgets.configure({
+            hitsPerPage: 100
+        }),
+        // Main hits widget (items only)
         instantsearch.widgets.hits({
-            container: `[algolia-search-function="results"][algolia-search-id="${getHitsContainerId(context)}"] .search-results_list`,
+            container: '#hits-1',
             transformItems(items) {
-                if (!items || !Array.isArray(items)) return [];
-                logTemplatesCount(items.length);
-                return items;
+                const lang = document.documentElement.lang || 'en';
+                const filtered = items.filter(item => {
+                    const isItem = item.category === 'template_item' || item.category === 'connect_item';
+                    const matchesLang = !item.language || item.language === lang;
+                    return isItem && matchesLang;
+                });
+                logTemplatesCount(filtered.length);
+                return filtered;
             },
+            limit: 100,
             templates: {
                 item(hit, { html, components }) {
                     try {
-                        const context = getSearchContext(document.querySelector('.algolia-search[cc-algolia-context]'));
-                        const localeConfig = getLocaleConfig();
                         const lang = document.documentElement.lang || 'en';
                         const urlPrefixes = getUrlPrefixes(lang);
+                        const isConnect = context === 'connect';
                         
-                        const config = {
-                            connect: {
-                                urlPrefix: urlPrefixes.connect,
-                                titleField: 'Name 2',
-                                slugField: 'Slug'
-                            },
-                            templates: {
-                                urlPrefix: urlPrefixes.templates,
-                                titleField: localeConfig.titleField,
-                                slugField: localeConfig.slugField
-                            }
-                        }[context];
+                        if (!hit || !hit.slug || !hit.title) return '';
                         
-                        if (!hit || !hit[config.slugField]) return '';
-                        
-                        const displayTitle = String(hit[config.titleField] || '');
-                        if (!displayTitle) return '';
+                        const url = isConnect 
+                            ? `${urlPrefixes.connect}${hit.slug}`
+                            : `${urlPrefixes.templates}${hit.slug}`;
                         
                         return html`
-                            <a 
-                                cc-t-id="jetboost-search-result-item" 
-                                href="${config.urlPrefix}${hit[config.slugField]}" 
-                                class="search-results_item w-inline-block"
-                            >
-                                <p cc-t-id="jetboost-search-result-item-title" class="text-sm">
-                                    ${components.Highlight({ hit, attribute: config.titleField }) || displayTitle}
-                                </p>
-                            </a>
+                            <div class="ais-Hits-item">
+                                <a 
+                                    cc-t-id="jetboost-search-result-item" 
+                                    href="${url}" 
+                                    class="search-results_item w-inline-block"
+                                >
+                                    <p cc-t-id="jetboost-search-result-item-title" class="text-sm">
+                                        ${components.Highlight({ hit, attribute: 'title' }) || String(hit.title)}
+                                    </p>
+                                </a>
+                            </div>
                         `;
                     } catch (error) {
+                        console.error('Error rendering hit:', error);
                         return '';
                     }
                 },
-                empty: ({ query }, { html }) => html`
-                    <div class="search-results_no-results">
-                        <p class="text-sm u-text-bold">No results found</p>
-                    </div>
-                `
-            }
-        })
-    ]);
-
-    secondarySearch.addWidgets([
-        secondaryVirtualSearchBox,
-        instantsearch.widgets.hits({
-            container: `[algolia-search-function="results"][algolia-search-id="${getHitsContainerId(context, true)}"] .search-results_list`,
-            transformItems(items) {
-                if (!items || !Array.isArray(items)) return [];
-                logCategoriesCount(items.length);
-                return items;
-            },
-            templates: {
-                item(hit, { html, components }) {
-                    try {
-                        if (!hit || typeof hit !== 'object') return '';
-                        
-                        const isConnect = instanceType.startsWith('connect');
-                        const localeConfig = getLocaleConfig();
-                        const lang = document.documentElement.lang || 'en';
-                        const urlPrefixes = getUrlPrefixes(lang);
-                        
-                        const titleField = isConnect ? 'Name 2' : localeConfig.titleField;
-                        const slugField = isConnect ? 'Slug' : localeConfig.slugField;
-                        
-                        if (!hit[slugField] || !hit[titleField]) return '';
-                        
-                        const displayTitle = String(hit[titleField] || '');
-                        if (!displayTitle) return '';
-                        
-                        const urlPrefix = isConnect ? urlPrefixes.connectCategory : urlPrefixes.templatesCategory;
-                        
-                        return html`
-                            <a cc-t-id="jetboost-search-result-item" href="${urlPrefix}${hit[slugField]}" class="search-results_item w-inline-block">
-                                <p cc-t-id="jetboost-search-result-item-title" class="text-sm">
-                                    ${components.Highlight({ hit, attribute: titleField }) || displayTitle}
-                                </p>
-                            </a>
-                        `;
-                    } catch (error) {
-                        return '';
-                    }
-                },
-                empty: ({ query }, { html }) => html`
-                    <div class="search-results_no-results">
-                        <p class="text-sm u-text-bold">No results found</p>
-                    </div>
-                `
-            },
-            render({ results, widgetParams }) {
-                try {
-                    const resultsWrapper = document.querySelector('[algolia-search-function="results"][algolia-search-id="connect_categories"]');
+                empty: ({ results }, { html }) => {
+                    // Check if there were any hits before language filtering
+                    const totalHits = results?.hits?.length || 0;
+                    const lang = document.documentElement.lang || 'en';
+                    const hitsInCurrentLang = results?.hits?.filter(hit => !hit.language || hit.language === lang).length || 0;
                     
-                    if (!results.query && resultsWrapper) {
-                        resultsWrapper.style.display = 'none';
-                        return;
+                    // Only show "no results" if there were no hits at all,
+                    // or if there were hits but none in the current language
+                    if (totalHits === 0 || (totalHits > 0 && hitsInCurrentLang === 0)) {
+                        return html`
+                            <div class="search-results_no-results">
+                                <p class="text-sm u-text-bold">No results found</p>
+                            </div>
+                        `;
                     }
-
-                    if (resultsWrapper) {
-                        resultsWrapper.style.display = 'block';
+                    return '';
+                }
+            },
+            escapeHTML: false,
+            cssClasses: {
+                root: 'search-results_list'
+            }
+        }),
+        // Categories hits widget
+        instantsearch.widgets.hits({
+            container: '#hits-2',
+            transformItems(items) {
+                const lang = document.documentElement.lang || 'en';
+                const filtered = items.filter(item => {
+                    const isCategory = item.category === 'template_category' || item.category === 'connect_category';
+                    const matchesLang = !item.language || item.language === lang;
+                    return isCategory && matchesLang;
+                });
+                logCategoriesCount(filtered.length);
+                return filtered;
+            },
+            limit: 100,
+            templates: {
+                item(hit, { html, components }) {
+                    try {
+                        const lang = document.documentElement.lang || 'en';
+                        const urlPrefixes = getUrlPrefixes(lang);
+                        const isConnect = context === 'connect';
+                        
+                        if (!hit || !hit.slug || !hit.title) return '';
+                        
+                        const url = isConnect 
+                            ? `${urlPrefixes.connectCategory}${hit.slug}`
+                            : `${urlPrefixes.templatesCategory}${hit.slug}`;
+                        
+                        return html`
+                            <div class="ais-Hits-item">
+                                <a 
+                                    cc-t-id="jetboost-search-result-item" 
+                                    href="${url}" 
+                                    class="search-results_item w-inline-block"
+                                >
+                                    <p cc-t-id="jetboost-search-result-item-title" class="text-sm">
+                                        ${components.Highlight({ hit, attribute: 'title' }) || String(hit.title)}
+                                    </p>
+                                </a>
+                            </div>
+                        `;
+                    } catch (error) {
+                        console.error('Error rendering category hit:', error);
+                        return '';
                     }
-                } catch (error) {}
+                },
+                empty: ({ results }, { html }) => {
+                    // Check if there were any hits before language filtering
+                    const totalHits = results?.hits?.length || 0;
+                    const lang = document.documentElement.lang || 'en';
+                    const hitsInCurrentLang = results?.hits?.filter(hit => !hit.language || hit.language === lang).length || 0;
+                    
+                    // Only show "no results" if there were no hits at all,
+                    // or if there were hits but none in the current language
+                    if (totalHits === 0 || (totalHits > 0 && hitsInCurrentLang === 0)) {
+                        return html`
+                            <div class="search-results_no-results">
+                                <p class="text-sm u-text-bold">No results found</p>
+                            </div>
+                        `;
+                    }
+                    return '';
+                }
             }
         })
     ]);
 
     primarySearch.start();
-    secondarySearch.start();
 }
 
 function handleSearchResultInteraction(searchResult, action) {
