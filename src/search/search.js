@@ -52,18 +52,18 @@ const trackCombinedResults = _.debounce(() => {
 
         window.trackingHelper.trackSearchQueryEntered(trackingData);
     }
-}, 3000);
+}, 250);
 
 // Update the logging functions
 const logTemplatesCount = _.debounce((count) => {
     searchState.templatesCount = count;
     trackCombinedResults();
-}, 3000);
+}, 500);
 
 const logCategoriesCount = _.debounce((count) => {
     searchState.categoriesCount = count;
     trackCombinedResults();
-}, 3000);
+}, 500);
 
 const logTemplatesStats = _.debounce((count) => {}, 1000);
 
@@ -115,7 +115,6 @@ function initAlgoliaSearch() {
     const searchClientWithLogging = {
         ...searchClient,
         search(requests) {
-            console.log('Algolia API Call:', requests);
             return searchClient.search(requests);
         }
     };
@@ -152,11 +151,11 @@ function initAlgoliaSearch() {
 
     const searchConfig = {
         connect: {
-            searchableAttributes: ['title'],
+            searchableAttributes: ['title', 'slug', 'description', 'keywords', 'category_titles'],
             urlPrefix: '/connect/'
         },
         templates: {
-            searchableAttributes: ['title'],
+            searchableAttributes: ['title', 'slug', 'description', 'keywords', 'category_titles'],
             urlPrefix: '/templates/'
         }
     }[context];
@@ -169,11 +168,18 @@ function initAlgoliaSearch() {
             clickAnalytics: false,
             enablePersonalization: false,
             getRankingInfo: false,
-            searchableAttributes: searchConfig.searchableAttributes
+            searchableAttributes: searchConfig.searchableAttributes,
+            typoTolerance: true,
+            minWordSizefor1Typo: 3,
+            minWordSizefor2Typos: 7,
+            hitsPerPage: 100,
+            maxValuesPerFacet: 100,
+            distinct: true,
+            attributesToRetrieve: ['*']
         },
         insights: false,
         searchFunction(helper) {
-            // Only perform search if there's a query
+            helper.setQueryParameter('hitsPerPage', 100);  // Force hitsPerPage here
             if (helper.state.query && helper.state.query.length >= 3) {
                 helper.search();
             }
@@ -232,36 +238,29 @@ function initAlgoliaSearch() {
                 searchInput.addEventListener('input', (e) => {
                     const searchValue = e.target.value.trim();
                     
-                    // Show loading states when typing starts
-                    if (searchValue.length > 0) {
+                    // Show loading states only when we'll actually perform a search
+                    if (searchValue.length >= 3) {
                         if (searchSpinner) {
                             searchSpinner.style.display = 'block';
                         }
                         if (searchLoadingBar) {
                             searchLoadingBar.style.display = 'block';
                         }
-                    }
-
-                    if (searchValue.length === 0) {
-                        // Hide everything when input is empty
+                        debouncedRefine(searchValue);
+                        hideLoadingStates();
                         if (searchResultsWrapper) {
-                            searchResultsWrapper.style.display = 'none';
+                            searchResultsWrapper.style.display = 'block';
                         }
+                    } else {
+                        // Hide loading states and results for < 3 characters
                         if (searchSpinner) {
                             searchSpinner.style.display = 'none';
                         }
                         if (searchLoadingBar) {
                             searchLoadingBar.style.display = 'none';
                         }
-                    } else if (searchValue.length < 3) {
                         if (searchResultsWrapper) {
                             searchResultsWrapper.style.display = 'none';
-                        }
-                    } else {
-                        debouncedRefine(searchValue);
-                        hideLoadingStates();
-                        if (searchResultsWrapper) {
-                            searchResultsWrapper.style.display = 'block';
                         }
                     }
                     
@@ -346,18 +345,23 @@ function initAlgoliaSearch() {
 
     primarySearch.addWidgets([
         primaryVirtualSearchBox,
-        // Main hits widget (non-category items)
+        instantsearch.widgets.configure({
+            hitsPerPage: 100
+        }),
+        // Main hits widget (items only)
         instantsearch.widgets.hits({
-            container: `[algolia-search-function="results"][algolia-search-id="${getHitsContainerId(context)}"] .search-results_list`,
+            container: '#hits-1',
             transformItems(items) {
-                if (!items || !Array.isArray(items)) return [];
                 const lang = document.documentElement.lang || 'en';
-                const filteredItems = items
-                    .filter(item => item.category !== 'template_category' && item.category !== 'connect_category')
-                    .filter(item => !item.language || item.language === lang);
-                logTemplatesCount(filteredItems.length);
-                return filteredItems;
+                const filtered = items.filter(item => {
+                    const isItem = item.category === 'template_item' || item.category === 'connect_item';
+                    const matchesLang = !item.language || item.language === lang;
+                    return isItem && matchesLang;
+                });
+                logTemplatesCount(filtered.length);
+                return filtered;
             },
+            limit: 100,
             templates: {
                 item(hit, { html, components }) {
                     try {
@@ -406,20 +410,26 @@ function initAlgoliaSearch() {
                     }
                     return '';
                 }
+            },
+            escapeHTML: false,
+            cssClasses: {
+                root: 'search-results_list'
             }
         }),
         // Categories hits widget
         instantsearch.widgets.hits({
             container: '#hits-2',
             transformItems(items) {
-                if (!items || !Array.isArray(items)) return [];
                 const lang = document.documentElement.lang || 'en';
-                const categoryItems = items
-                    .filter(item => context === 'connect' ? item.category === 'connect_category' : item.category === 'template_category')
-                    .filter(item => !item.language || item.language === lang);
-                logCategoriesCount(categoryItems.length);
-                return categoryItems;
+                const filtered = items.filter(item => {
+                    const isCategory = item.category === 'template_category' || item.category === 'connect_category';
+                    const matchesLang = !item.language || item.language === lang;
+                    return isCategory && matchesLang;
+                });
+                logCategoriesCount(filtered.length);
+                return filtered;
             },
+            limit: 100,
             templates: {
                 item(hit, { html, components }) {
                     try {
