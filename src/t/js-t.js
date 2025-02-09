@@ -467,11 +467,13 @@
               if (entry.target.getAttribute("data-in-view") === "true") {
                 window.trackElementWithAttributes(entry.target);
 
-                if (!entry.target.hasAttribute("cc-t-in_view_allow_multipe")) {
+                // Get the attribute value, default to "false" if not present
+                const allowMultiple = entry.target.getAttribute("cc-t-in_view_allow_multipe") === "true";
+                if (!allowMultiple) {
                   observer.unobserve(entry.target);
                 }
               }
-            }, parseFloat(delay) * 1000); // Convert seconds to milliseconds
+            }, parseFloat(delay) * 1000);
 
             // Store timeout ID to clear if element leaves view
             entry.target.setAttribute("data-timeout-id", timeoutId);
@@ -480,7 +482,9 @@
             // Original behavior for elements without delay
             window.trackElementWithAttributes(entry.target);
 
-            if (!entry.target.hasAttribute("cc-t-in_view_allow_multipe")) {
+            // Get the attribute value, default to "false" if not present
+            const allowMultiple = entry.target.getAttribute("cc-t-in_view_allow_multipe") === "true";
+            if (!allowMultiple) {
               observer.unobserve(entry.target);
             }
           }
