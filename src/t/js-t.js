@@ -315,11 +315,15 @@
         ".typeform.com",
         window.getAttributionUserId()
       );
+      
+      // Determine which Segment key to use based on hostname
+      const isDevelopment = window.location.hostname === 'www.web-team.tfdev.typeform.com';
+      const segmentKey = isDevelopment
+        ? 'N4DrQC6NYcQXbJZo6iAU2QLSymJGMQkI'  // Segment Dev key
+        : '13PRPoCAmemn6i0qZSq8pnKYbRZ57rTB';  // Segment Prod Key
+
       trackingClient.default.init(
-        // Segment Prod Key
-        "13PRPoCAmemn6i0qZSq8pnKYbRZ57rTB",
-        // Segment Dev key
-        // 'N4DrQC6NYcQXbJZo6iAU2QLSymJGMQkI',
+        segmentKey,
         trackingHelper.getMandatoryProperties(),
         {
           integrations: {
