@@ -237,6 +237,41 @@
           location_depth: scrollPercentage,
         });
       },
+      trackExperimentViewed: (props) => {
+        const state = window.optimizely?.get('state');
+        if (!state) {
+          return;
+        }
+
+        const activeExperiments = state.getActiveExperimentIds();
+        const userContext = window.optimizely?.get('visitor');
+        
+        // Track an event for each active experiment
+        activeExperiments.forEach(experimentId => {
+          const experiment = state.getExperimentStates()[experimentId];
+          if (experiment) {
+            // Get active campaign states
+            const campaignStates = window.optimizely.get('state').getCampaignStates({ isActive: true });
+            
+            // Find the campaign that contains our experiment
+            const campaign = Object.values(campaignStates).find(c => 
+              c.experiment && c.experiment.id === experimentId
+            );
+            
+            if (campaign && !campaign.isInCampaignHoldback) {
+              const eventData = {
+                experiment_id: experimentId,
+                experiment_name: campaign.experiment.name,
+                variation_id: campaign.variation.id,
+                variation_name: campaign.variation.name,
+                optimizely_user_id_fingerprint: window.optimizely?.get('visitor')?.visitorId
+              };
+              
+              window.trackingHelper.trackEvent("experiment_viewed", eventData);
+            }
+          }
+        });
+      },
       trackSearchQueryEntered: (data) => {
         const props = {
           ...window.trackingHelper.getMandatoryProperties(),
@@ -338,6 +373,51 @@
       window.analytics.ready(() => {
         hasTrackingInitialized = true;
         window.trackingHelper.trackViewPageSection();
+
+        // Function to track active experiments
+        const trackActiveExperiments = () => {
+          const state = window.optimizely?.get('state');
+          const activeExperiments = state?.getActiveExperimentIds() || [];
+          
+          if (activeExperiments.length > 0) {
+            const campaignStates = state.getCampaignStates({ isActive: true });
+            
+            activeExperiments.forEach(experimentId => {
+              const campaign = Object.values(campaignStates).find(c => 
+                c.experiment && c.experiment.id === experimentId
+              );
+              
+              if (campaign && !campaign.isInCampaignHoldback) {
+                const eventData = {
+                  experiment_id: experimentId,
+                  experiment_name: campaign.experiment.name,
+                  variation_id: campaign.variation.id,
+                  variation_name: campaign.variation.name,
+                  optimizely_user_id_fingerprint: window.optimizely?.get('visitor')?.visitorId
+                };
+                
+                window.trackingHelper.trackEvent("experiment_viewed", eventData);
+              }
+            });
+          }
+        };
+
+        // Add Optimizely initialization check and tracking
+        if (window.optimizely) {
+          // Track any already-active experiments
+          trackActiveExperiments();
+
+          // Add listener for future activations
+          window.optimizely.push({
+            type: "addListener",
+            handler: function(event) {
+              if (event.type === 'lifecycle' && 
+                  (event.name === 'activateDeferredDone' || event.name === 'activated')) {
+                trackActiveExperiments();
+              }
+            }
+          });
+        }
 
         if (window.reveal) {
           const { company } = window.reveal;
