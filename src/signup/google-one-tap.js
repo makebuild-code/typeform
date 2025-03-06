@@ -1,8 +1,9 @@
 (function googleOneTapInitScope() {
   const ONE_TAP_BLOCKED_URLS = [
     "/signup/",
-    "/refer-a-friend/invite/",
-    "/careers/",
+    "/refer-a-friend/invite",
+    "/careers",
+    "/videoask"
   ];
   const GOOGLE_CLIENT_ID =
     "6362390987-tg4ho08ait31oaomjia4367ln4e047qd.apps.googleusercontent.com";
