@@ -677,8 +677,10 @@
         
         return domains.flatMap(domain => [
           `https://${domain}/signup/`,
-          `https://${domain}/signup`
-        ]).concat(['/signup/', '/signup']); // Include relative paths
+          `https://${domain}/signup`,
+          `https://${domain}/signup-email/`,
+          `https://${domain}/signup-email`
+        ]).concat(['/signup/', '/signup', '/signup-email/', '/signup-email']); // Include relative paths
       };
 
       const signupUrls = getSignupUrls();
