@@ -682,10 +682,27 @@
       };
 
       const signupUrls = getSignupUrls();
-      if (linkHref && signupUrls.includes(linkHref)) {
-        const location = link.getAttribute("cc-t-location") || "";
-        const itemType = link.getAttribute("cc-t-item_type") || "link";
-        window.trackingHelper.trackSignup(linkHref, linkText || "", location, itemType);
+      if (linkHref) {
+        try {
+          const url = new URL(linkHref);
+          const matchesSignup = signupUrls.some(signupUrl => {
+            // Handle relative paths
+            if (signupUrl.startsWith('/')) {
+              return url.pathname === signupUrl || url.pathname === signupUrl.slice(0, -1);
+            }
+            // Handle absolute URLs
+            return url.origin + url.pathname === signupUrl || url.origin + url.pathname === signupUrl.slice(0, -1);
+          });
+
+          if (matchesSignup) {
+            const location = link.getAttribute("cc-t-location") || "";
+            const itemType = link.getAttribute("cc-t-item_type") || "link";
+            window.trackingHelper.trackSignup(linkHref, linkText || "", location, itemType);
+          }
+        } catch (e) {
+          // Handle invalid URLs silently
+          //console.debug('Invalid URL in signup tracking:', e);
+        }
       }
 
       // contactSales tracking
