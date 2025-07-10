@@ -44,15 +44,16 @@
   ];
 
   function calculateYearlySavingForPricing(pricing) {
-    if (!pricing?.[BillingPeriod.Monthly] || !pricing?.[BillingPeriod.Yearly]) {
+    if (!pricing?.[BillingPeriod.Monthly]?.visiblePrice || !pricing?.[BillingPeriod.Yearly]?.visiblePrice) {
       return null;
     }
 
-    return (
-      (12 * pricing[BillingPeriod.Monthly].price?.base_amount -
-        pricing[BillingPeriod.Yearly].price?.base_amount) /
-      1000
-    );
+    // Use the visible prices (which are already rounded) instead of raw base amounts
+    const monthlyPrice = pricing[BillingPeriod.Monthly].visiblePrice.price;
+    const yearlyPrice = pricing[BillingPeriod.Yearly].visiblePrice.price;
+    
+    // Calculate: (monthly price × 12) - yearly total price
+    return (monthlyPrice * 12) - (yearlyPrice * 12);
   }
 
   function applyVisiblePricing(plan) {
@@ -85,10 +86,12 @@
       .map((plan) => {
         const result = {
           ...plan,
-          yearlySaving: calculateYearlySavingForPricing(plan.pricing),
         };
 
         applyVisiblePricing(result);
+        
+        // Calculate yearly savings AFTER visible pricing is applied
+        result.yearlySaving = calculateYearlySavingForPricing(result.pricing);
 
         if (PLANS_WITH_CUSTOM_PRICING.includes(result.planName)) {
           delete result.pricing;
@@ -105,8 +108,22 @@
     }
 
     try {
+      // Get currency from URL query parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const currencyParam = urlParams.get('cur')?.toLowerCase();
+      
+      // Determine which payload file to load based on currency parameter
+      let payloadFileName = 'v4-initial-payload_usd.json'; // default
+      if (currencyParam === 'gbp') {
+        payloadFileName = 'v4-initial-payload_gbp.json';
+      } else if (currencyParam === 'usd') {
+        payloadFileName = 'v4-initial-payload_usd.json';
+      } else if (currencyParam === 'eur') {
+        payloadFileName = 'v4-initial-payload_eur.json';
+      }
+      
       const pricingPayload = await fetch(
-        "https://static.makebuild.studio/client-assets/typeform/pricing-july-2025/v4-initial-payload.json"
+        `https://static.makebuild.studio/client-assets/typeform/pricing-july-2025/${payloadFileName}`
       ).then((res) => res.json());
 
       const corePlans = transformPlans(pricingPayload.plans, CORE_PLAN_NAMES);
