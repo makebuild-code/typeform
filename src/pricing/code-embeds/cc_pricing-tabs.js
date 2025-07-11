@@ -1,5 +1,3 @@
-// Either include this file in your code embed or copy the content and paste it in your code embed
-// Currently stored in code embed .cc_pricing-tabs inside Component: "Molecule / Pricing Core Plans"
 document.addEventListener('DOMContentLoaded', function () {
     // Custom attribute selectors
     const TAB_GROUP_NAME_ATTR = '[data-pricing-tabgroupname]';
@@ -125,21 +123,23 @@ function updateSignupButtons() {
 }
 
 const yearlySignupUrls = {
-    basic: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbasic%26period%3DP1Y%26is_express_checkout%3Dtrue",
-    plus: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dplus%26period%3DP1Y%26is_express_checkout%3Dtrue",
-    business: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbusiness%26period%3DP1Y%26is_express_checkout%3Dtrue",
+    basic: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbasic%26period%3DP1Y%26is_express_checkout%3Dtrue",
+    plus: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dplus%26period%3DP1Y%26is_express_checkout%3Dtrue",
+    business: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbusiness%26period%3DP1Y%26is_express_checkout%3Dtrue",
     enterprise_tier_1_self_serve: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=public%20pricing%20page&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx",
-    growth_essentials: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_essentials%26period%3DP1Y%26is_express_checkout%3Dtrue",
-    growth_pro: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_pro%26period%3DP1Y%26is_express_checkout%3Dtrue",
-    growth_enterprise: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=typeformforgrowth&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx"
+    growth_essentials: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_essentials%26period%3DP1Y%26is_express_checkout%3Dtrue",
+    growth_pro: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_pro%26period%3DP1Y%26is_express_checkout%3Dtrue",
+    growth_enterprise: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=typeformforgrowth&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx",
+    talent: "https://admin.typeform.com/signup?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dtalent%26period%3DP1Y%26is_express_checkout%3Dtrue"
   };
   
 const monthlySignupUrls = {
-    basic: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbasic%26period%3DP1M%26is_express_checkout%3Dtrue",
-    plus: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dplus%26period%3DP1M%26is_express_checkout%3Dtrue",
-    business: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbusiness%26period%3DP1M%26is_express_checkout%3Dtrue",
+    basic: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbasic%26period%3DP1M%26is_express_checkout%3Dtrue",
+    plus: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dplus%26period%3DP1M%26is_express_checkout%3Dtrue",
+    business: "hhttps://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbusiness%26period%3DP1M%26is_express_checkout%3Dtrue",
     enterprise_tier_1_self_serve: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=public%20pricing%20page&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx",
-    growth_essentials: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_essentials%26period%3DP1M%26is_express_checkout%3Dtrue",
-    growth_pro: "https://www.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_pro%26period%3DP1M%26is_express_checkout%3Dtrue",
-    growth_enterprise: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=typeformforgrowth&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx"
+    growth_essentials: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_essentials%26period%3DP1M%26is_express_checkout%3Dtrue",
+    growth_pro: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_pro%26period%3DP1M%26is_express_checkout%3Dtrue",
+    growth_enterprise: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=typeformforgrowth&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx",
+    talent: "https://admin.typeform.com/signup?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dtalent%26period%3DP1M%26is_express_checkout%3Dtrue"
 };
