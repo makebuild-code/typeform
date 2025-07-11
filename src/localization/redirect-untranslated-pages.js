@@ -1,7 +1,7 @@
 const LocalizationRedirect = (function() {
     // Configuration settings for different functionality
     const CONFIG = {
-        redirectUntranslatedToEnglish: true,
+        redirectUntranslatedToEnglish: false,
         redirectEnglishToSpanish: true,
         disableUntranslatedLinks: true,
         debug: false
@@ -51,6 +51,12 @@ const LocalizationRedirect = (function() {
         
         // Pricing
         '/es/precios': { englishPath: '/pricing', redirectToSpanish: true },
+
+        // Pricing with talent (temp)
+        '/es/pricing-with-talent': { englishPath: '/pricing-with-talent', redirectToSpanish: true },
+
+        // Pricing - growth
+        '/es/precios/growth': { englishPath: '/pricing/growth', redirectToSpanish: true },
         
         // Product
         '/es/producto': { englishPath: '/product-overview', redirectToSpanish: true },
