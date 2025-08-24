@@ -25,7 +25,7 @@ const BreadcrumbSchema = {
      * Generates and injects breadcrumb schema script.
      */
     generate() {
-        const breadcrumbContainer = document.querySelector('.breadcrumb-bar_wrap');
+        const breadcrumbContainer = document.querySelector('[cc-breadcrumb-element="breadcrumb-menu"]');
         if (!breadcrumbContainer) return;
 
         const cleanUrl = (url) => {
@@ -39,17 +39,16 @@ const BreadcrumbSchema = {
         };
 
         const breadcrumbSchema = Array.from(
-            breadcrumbContainer.querySelectorAll('.breadcrumb_item')
+            breadcrumbContainer.querySelectorAll('[cc-breadcrumb-element="item"]')
         ).map((item, index) => ({
             '@type': 'ListItem',
             position: index + 1,
             item: {
                 '@id': cleanUrl(
-                    item.querySelector('.breadcrumb_link')?.href || window.location.href
+                    item.querySelector('[cc-breadcrumb-element="link"]')?.href || window.location.href
                 ),
                 name: (
-                    item.querySelector('.breadcrumb_link') || 
-                    item.querySelector('div:not(.breadcrumb_icon)')
+                    item.querySelector('[cc-breadcrumb-element="link"]') 
                 ).textContent.trim()
             }
         }));
