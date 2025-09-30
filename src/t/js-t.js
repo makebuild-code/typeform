@@ -613,6 +613,8 @@
     "referrer",
     "redirect_uri",
     "dev",
+    "gspk",
+    "gsxid",
     window.ATTRIBUTION_ID_GLOBAL_KEY,
   ];
   const listenersMap = new Map();
