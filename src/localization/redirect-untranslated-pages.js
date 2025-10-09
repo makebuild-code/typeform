@@ -2,7 +2,7 @@ const LocalizationRedirect = (function() {
     // Configuration settings for different functionality
     const CONFIG = {
         redirectUntranslatedToEnglish: false,
-        redirectEnglishToSpanish: true,
+        redirectEnglishToSpanish: false,
         disableUntranslatedLinks: true,
         debug: false
     };
