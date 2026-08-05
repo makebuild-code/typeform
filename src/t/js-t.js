@@ -305,9 +305,8 @@
 
     // Performance Consent
     const hasPerformanceConsent = consentUtil.hasPerformanceConsent();
-    const hasConsentCookie = consentUtil.hasConsentCookie();
 
-    const canInitializeTracking = hasConsentCookie && hasPerformanceConsent;
+    const canInitializeTracking = hasPerformanceConsent;
 
     if (hasTargetingConsent && !document.getElementById("clearbit")) {
       const clearbitScript = document.createElement("script");
