@@ -369,6 +369,35 @@
 
       if (!window.analytics) return;
 
+      // Segment source middleware: stitch the $impression event's anonymousId
+      // to our own attribution_user_id cookie so Amplitude's device_id lines
+      // up with the rest of the user's stitched journey. See:
+      // https://www.twilio.com/docs/segment/connections/sources/catalog/libraries/website/javascript/middleware
+      if (
+        typeof window.analytics.addSourceMiddleware === "function" &&
+        !window.__segmentImpressionMiddlewareRegistered
+      ) {
+        window.analytics.addSourceMiddleware(({ payload, next }) => {
+          const event = payload.obj;
+          const attributionId = window.getAttributionUserId
+            ? window.getAttributionUserId()
+            : null;
+
+          if (
+            event?.type === "track" &&
+            event?.event === "$impression" &&
+            attributionId
+          ) {
+            event.anonymousId = attributionId;
+          }
+
+          next(payload);
+        });
+
+        window.__segmentImpressionMiddlewareRegistered = true;
+        window.dispatchEvent(new Event("segment-impression-middleware:ready"));
+      }
+
       window.analytics.ready(() => {
         hasTrackingInitialized = true;
         window.trackingHelper.trackViewPageSection();
