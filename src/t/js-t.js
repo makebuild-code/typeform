@@ -293,6 +293,90 @@
 (function jsTrackingInitScope() {
   let hasPageTracked = false;
   let hasTrackingInitialized = false;
+
+  // The backend pageview covers visitors without performance consent, where
+  // Segment never initializes and no view_page_section is sent. It must not
+  // fire for visitors who DO have performance consent, or the pageview is
+  // counted twice.
+  //
+  // OneTrust publishes consent in phases. Traced on a cold US load:
+  //
+  //   t=978   OnetrustActiveGroups undefined, no OptanonConsent cookie
+  //   t=3308  OnetrustActiveGroups ",,"          <- resolves to NO consent
+  //   t=4422  OnetrustActiveGroups ",1,2,3,4,"   <- auto-grant lands
+  //
+  // For ~1.1s the group list exists but is empty, so hasPerformanceConsent()
+  // reports false for a visitor who is about to have it. Deciding in that
+  // window sends the backend pageview and latches hasPageTracked; Segment
+  // then initializes on the next phase and sends view_page_section too.
+  //
+  // Note the eager initTracking() call below cannot simply be dropped to
+  // avoid this. js-t.js is injected as type="cc-ext-hosted-script" and only
+  // executes when the consent extension activates it at DOMContentLoaded.
+  // When OneTrust resolves first (measured: events at 556ms and 816ms,
+  // js-t.js active at 817ms) the listener is registered too late to ever
+  // receive one, and without the eager call tracking never initializes at
+  // all. So keep the eager call and make the pageview decision wait instead.
+  const CONSENT_POLL_MS = 100;
+  const CONSENT_TIMEOUT_MS = 5000;
+  let backendPageviewScheduled = false;
+
+  function isConsentResolved() {
+    // Returning visitor: their stored choice is already readable.
+    if (consentUtil.hasConsentCookie()) return true;
+
+    const groups = window.OnetrustActiveGroups;
+    return typeof groups === "string" && groups.replace(/,/g, "") !== "";
+  }
+
+  function sendBackendPageview() {
+    if (hasPageTracked) return;
+
+    // Re-read rather than trusting the pass that scheduled this: that is the
+    // whole point of waiting.
+    if (consentUtil.hasPerformanceConsent()) return;
+
+    hasPageTracked = true;
+    const viewPageProps = window.trackingHelper.getViewPageProps();
+
+    fetch("https://www.typeform.com/api/v2/track/page/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        typeformProperty:
+          (viewPageProps && viewPageProps.typeform_property) || "public_site",
+        title: document.title,
+        url: window.location.href,
+        referrer: document.referrer,
+        userAgent: navigator.userAgent,
+        typeformVersion: window.trackingHelper.getTypeformVersion(),
+        attributionUserId: window.getAttributionUserId(),
+        locale: navigator.language,
+      }),
+    }).catch(() => {});
+  }
+
+  function scheduleBackendPageview() {
+    if (backendPageviewScheduled) return;
+    backendPageviewScheduled = true;
+
+    // The timeout covers OneTrust being blocked outright: the group list
+    // never appears, and that visitor genuinely has no consent.
+    const deadline = Date.now() + CONSENT_TIMEOUT_MS;
+
+    (function waitForConsent() {
+      if (hasPageTracked) return;
+
+      if (isConsentResolved() || Date.now() >= deadline) {
+        sendBackendPageview();
+        return;
+      }
+
+      setTimeout(waitForConsent, CONSENT_POLL_MS);
+    })();
+  }
   function initTracking() {
     // Now you can run following consentUtil check the exact consent.
     // Script tags above adds consentUtil helper to global window
@@ -316,27 +400,8 @@
       document.body.appendChild(clearbitScript);
     }
 
-    if (!canInitializeTracking && !hasPageTracked) {
-      hasPageTracked = true;
-      const viewPageProps = window.trackingHelper.getViewPageProps();
-
-      fetch("https://www.typeform.com/api/v2/track/page/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          typeformProperty:
-            (viewPageProps && viewPageProps.typeform_property) || "public_site",
-          title: document.title,
-          url: window.location.href,
-          referrer: document.referrer,
-          userAgent: navigator.userAgent,
-          typeformVersion: window.trackingHelper.getTypeformVersion(),
-          attributionUserId: window.getAttributionUserId(),
-          locale: navigator.language,
-        }),
-      }).catch(() => {});
+    if (!canInitializeTracking) {
+      scheduleBackendPageview();
     }
 
     // For eg. initialize tracking when we have functional consent
