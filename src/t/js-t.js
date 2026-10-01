@@ -488,9 +488,19 @@
     });
   }
 
+  // Tracking is initialized only from the OneTrustGroupsUpdated callback,
+  // never eagerly. OneTrust publishes consent in phases: on a cold US load
+  // OnetrustActiveGroups goes undefined -> ",," -> ",1,2,3,4," once the
+  // geolocation lookup lands. Calling initTracking() directly could land in
+  // that empty-group window, where hasPerformanceConsent() reads false for a
+  // visitor who is about to have consent, sending the backend pageview and
+  // latching hasPageTracked. Segment then initializes on the next phase and
+  // sends view_page_section too, double-counting the pageview.
+  //
+  // OneTrustGroupsUpdated only fires once the group list is resolved, so
+  // consent is always read after it settles. Matches how auth pages do it.
   window.addEventListener("OneTrustGroupsUpdated", initTracking);
   window.addEventListener("oneTrustCookiesRejected", handleRejectCookies);
-  initTracking();
 })();
 
 // Tracking With Attributes Helper
