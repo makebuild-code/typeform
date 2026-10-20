@@ -50,6 +50,7 @@ const UntranslatedLinks = (function() {
         '/try/research',
         '/try/square',
         '/try/survey-builder',
+        '/try/tally-alternative',
         '/try/surveymonkey-alternative',
         '/try/typeformbrand',
         '/try/zohoforms-alternative',
