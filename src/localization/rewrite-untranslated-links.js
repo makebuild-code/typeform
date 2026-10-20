@@ -28,6 +28,7 @@ const UntranslatedLinks = (function() {
         '/surveys',
         '/templates',
         '/test-maker',
+        '/try/active-campaign',
         '/try/best-form-builder',
         '/try/brand',
         '/try/connect',
@@ -39,15 +40,19 @@ const UntranslatedLinks = (function() {
         '/try/jotform-alternative',
         '/try/klaviyo',
         '/try/landingpage',
+        '/try/landingpage-builder',
         '/try/notion',
+        '/try/paypal',
         '/try/poll-builder',
         '/try/questionnaire-builder',
         '/try/quiz-builder',
         '/try/registration',
         '/try/research',
+        '/try/square',
         '/try/survey-builder',
         '/try/surveymonkey-alternative',
         '/try/typeformbrand',
+        '/try/zohoforms-alternative',
         '/video'
     ];
 
