@@ -24,7 +24,6 @@ const UntranslatedLinks = (function() {
         '/quizzes',
         '/refer-a-friend',
         '/refer-a-friend/invite',
-        '/research-flow',
         '/roles/b2b-marketing',
         '/surveys',
         '/surveys/product-survey-questions-examples',
