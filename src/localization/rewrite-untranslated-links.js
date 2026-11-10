@@ -66,11 +66,52 @@ const UntranslatedLinks = (function() {
         '/wait-list'
     ];
 
+    // Collections whose slug is translated in a locale, keyed by locale, mapped to the English slug.
+    // Their items live under the translated slug (/es/plantillas/<item>), so links to items are left
+    // alone. Anything else under the slug is pointed at the English slug, since /plantillas/... 404s.
+    const LOCALIZED_SLUGS = {
+        es: {
+            '/plantillas': '/templates',
+            '/plantillas-category': '/templates-category',
+            '/plantillas-sub-category': '/templates-sub-category'
+        }
+    };
+
     const localePattern = new RegExp(`^/(${LOCALES.join('|')})(/.*)?$`);
+    // A full typeform.com URL inside the path, e.g. /es/https://www.typeform.com/es/pricing.
+    // Without this, removing the locale leaves /https://www.typeform.com/es/pricing, which 404s.
+    const nestedUrlPattern = new RegExp(`^(?:/(?:${LOCALES.join('|')}))?/https?:/+(?:www\\.)?typeform\\.com(/.*)?$`, 'i');
     const translatedPages = new Set(TRANSLATED_PAGES);
 
     function normalizePath(path) {
         return path.length > 1 ? path.replace(/\/+$/, '') : path;
+    }
+
+    function unwrapNestedUrl(path) {
+        const nested = path.match(nestedUrlPattern);
+        // Collapse leading slashes so the result can never be a protocol-relative //host URL
+        return nested ? (nested[1] || '/').replace(/^\/+/, '/') : path;
+    }
+
+    // The path a link should point at: unchanged for translated pages, English otherwise
+    function targetPath(pathname) {
+        const path = unwrapNestedUrl(pathname);
+
+        const match = path.match(localePattern);
+        if (!match) return path;
+
+        const locale = match[1];
+        const localePath = normalizePath(match[2] || '/');
+        const firstSegment = localePath.match(/^\/[^/]*/)[0];
+        const englishSlug = (LOCALIZED_SLUGS[locale] || {})[firstSegment];
+
+        // A collection item under a translated slug, e.g. /es/plantillas/<item>
+        if (englishSlug && localePath !== firstSegment) return path;
+
+        const englishPath = englishSlug
+            ? englishSlug + localePath.slice(firstSegment.length)
+            : localePath;
+        return translatedPages.has(englishPath) ? path : englishPath;
     }
 
     return {
@@ -79,15 +120,12 @@ const UntranslatedLinks = (function() {
                 const url = new URL(link.href, window.location.origin);
                 if (url.origin !== window.location.origin) return;
 
-                const match = url.pathname.match(localePattern);
-                if (!match) return;
+                const path = targetPath(url.pathname);
+                if (path === url.pathname) return;
 
-                const englishPath = normalizePath(match[2] || '/');
-                if (translatedPages.has(englishPath)) return;
+                link.setAttribute('href', `${path}${url.search}${url.hash}`);
 
-                link.setAttribute('href', `${englishPath}${url.search}${url.hash}`);
-
-                if (CONFIG.debug) console.log('UntranslatedLinks:', url.pathname, '->', englishPath);
+                if (CONFIG.debug) console.log('UntranslatedLinks:', url.pathname, '->', path);
             });
         },
 
