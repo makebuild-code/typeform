@@ -81,6 +81,16 @@
     return data;
   }
 
+  function addSignupContext({ provider, device }) {
+    return (signupData) => ({
+      ...signupData,
+      signup_device: device,
+      signup_user_agent: navigator.userAgent,
+      signup_provider: provider,
+      attribution_user_id: window.tid,
+    });
+  }
+
   function addOneTapData(isOneTap = false) {
     return (signupData) => {
       return isOneTap ? { ...signupData, isOneTap: "yes" } : signupData;
@@ -114,8 +124,9 @@
     (args) =>
       functions.reduceRight((arg, fn) => fn(arg), args);
 
-  function buildSignupExtra(isOneTap = false) {
+  function buildSignupExtra({ provider, device, isOneTap = false }) {
     return compose(
+      addSignupContext({ provider, device }),
       addCookiesData,
       addParamsData,
       addReferrer,
@@ -171,7 +182,9 @@
     Cookies.set("signup_user_agent", navigator.userAgent, cookieConfig);
     Cookies.set(
       "signup_extra",
-      JSON.stringify(buildSignupExtra(computedIsOneTap)),
+      JSON.stringify(
+        buildSignupExtra({ provider, device, isOneTap: computedIsOneTap })
+      ),
       sessionCookieConfig
     );
 
