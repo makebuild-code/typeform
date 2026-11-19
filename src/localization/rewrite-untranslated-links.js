@@ -31,6 +31,7 @@ const UntranslatedLinks = (function() {
         '/try/active-campaign',
         '/try/application',
         '/try/best-form-builder',
+        '/try/faq-builder',
         '/try/feedback',
         '/try/form-builder',
         '/try/googleforms-alternative',
