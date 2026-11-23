@@ -1,3 +1,47 @@
+/**
+ * @file Tab Function with Multi-Group and Billing Period Support
+ * @description
+ * Handles all tab-based interactions for pricing sections, allowing multiple tab groups
+ * (e.g., billing period, plan type) to stay synchronized and update signup links accordingly.
+ *
+ * ## How It Works:
+ * - Waits for the DOM to load.
+ * - Finds all tab groups with `[data-pricing-tabgroupname]`.
+ * - Within each group, identifies buttons using `[data-pricing-taboption]`.
+ * - Activates the correct default tab (e.g., "Yearly" by default for billing groups).
+ * - Updates the `data-billing-period` on all signup wrappers so pricing links stay consistent.
+ * - Keeps all matching tab groups (same name) synchronized when one tab changes.
+ * - Updates signup button URLs dynamically between monthly and yearly versions.
+ * - Optionally refreshes `ScrollTrigger` animations when tab changes occur.
+ *
+ * ## Key Functions:
+ * - `updateSignupButtons()` → Updates all signup button links based on the active billing period.
+ * - Inline `click` listeners → Handle tab switching, visual state (active class), and syncing.
+ *
+ * ## Custom Attributes:
+ * - `[data-pricing-tabgroupname]` → Identifies each group (e.g., "billing").
+ * - `[data-pricing-taboption]` → Defines each option (e.g., "monthly" or "yearly").
+ * - `[data-activeclass]` → Specifies which class marks an active state.
+ * - `[data-pricing-id="signup-button-wrap"]` → Wraps signup links tied to plans.
+ * - `[data-pricing-plan-name]` → Defines the specific plan for URL mapping.
+ * - `[data-free-trial]` → Optional. If present on a signup wrapper, the link goes straight to
+ *   `https://admin.typeform.com/signup?trial=VALUE` (no checkout redirect_uri).
+ *
+ * ## Example:
+ * ```html
+ * <div data-pricing-tabgroupname="billing">
+ *   <button data-pricing-taboption="monthly" data-activeclass="w--current">Monthly</button>
+ *   <button data-pricing-taboption="yearly" data-activeclass="w--current">Yearly</button>
+ * </div>
+ * ```
+ *
+ * ## Notes:
+ * - The script automatically defaults billing tabs to yearly if none is active.
+ * - Keeps multiple pricing tab groups (e.g., in sticky nav and body) in sync.
+ * - `ScrollTrigger.refresh()` is called after updating signup URLs if GSAP is available.
+ * - URLs for all plans are defined in `monthlySignupUrls` and `yearlySignupUrls`.
+ */
+
 document.addEventListener('DOMContentLoaded', function () {
     // Custom attribute selectors
     const TAB_GROUP_NAME_ATTR = '[data-pricing-tabgroupname]';
@@ -35,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
             button.addEventListener('click', function () {
                 // Log the clicked tab option
                 const tabOption = this.getAttribute('data-pricing-taboption');
-                console.log('Tab clicked:', tabOption);
+                log('Tab clicked:', tabOption);
 
                 // Update all signup button URLs based on the selected billing period
                 document.querySelectorAll('[data-pricing-id="signup-button-wrap"]').forEach(wrapper => {
@@ -116,7 +160,16 @@ function updateSignupButtons() {
         if (planName && linkElement) {
             const urls = billingPeriod === 'monthly' ? monthlySignupUrls : yearlySignupUrls;
             if (urls[planName]) {
-                linkElement.href = urls[planName];
+                let href = urls[planName];
+
+                // If the wrapper has a data-free-trial attribute, send it straight to signup
+                // with only trial=VALUE (no checkout redirect_uri).
+                const freeTrial = wrapper.getAttribute('data-free-trial');
+                if (freeTrial) {
+                    href = 'https://admin.typeform.com/signup?trial=' + encodeURIComponent(freeTrial);
+                }
+
+                linkElement.href = href;
             }
         }
     });
@@ -127,7 +180,6 @@ const yearlySignupUrls = {
     plus: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dplus%26period%3DP1Y%26is_express_checkout%3Dtrue",
     business: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbusiness%26period%3DP1Y%26is_express_checkout%3Dtrue",
     enterprise_tier_1_self_serve: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=public%20pricing%20page&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx",
-    growth_essentials: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_essentials%26period%3DP1Y%26is_express_checkout%3Dtrue",
     growth_pro: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_pro%26period%3DP1Y%26is_express_checkout%3Dtrue",
     growth_enterprise: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=typeformforgrowth&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx",
     talent: "https://admin.typeform.com/signup?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dtalent%26period%3DP1Y%26is_express_checkout%3Dtrue"
@@ -136,9 +188,8 @@ const yearlySignupUrls = {
 const monthlySignupUrls = {
     basic: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbasic%26period%3DP1M%26is_express_checkout%3Dtrue",
     plus: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dplus%26period%3DP1M%26is_express_checkout%3Dtrue",
-    business: "hhttps://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbusiness%26period%3DP1M%26is_express_checkout%3Dtrue",
+    business: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dbusiness%26period%3DP1M%26is_express_checkout%3Dtrue",
     enterprise_tier_1_self_serve: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=public%20pricing%20page&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx",
-    growth_essentials: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_essentials%26period%3DP1M%26is_express_checkout%3Dtrue",
     growth_pro: "https://admin.typeform.com/signup/?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dgrowth_pro%26period%3DP1M%26is_express_checkout%3Dtrue",
     growth_enterprise: "https://tfsales.typeform.com/to/PxcVKQGb?source=website&source2=typeformforgrowth&_gl=1*1seemqj*_gcl_au*MTA2ODk5NDM0My4xNzMxNDc4MjUx",
     talent: "https://admin.typeform.com/signup?redirect_uri=https%3A%2F%2Fadmin.typeform.com%2Fcheckout%3Fplan-name%3Dtalent%26period%3DP1M%26is_express_checkout%3Dtrue"

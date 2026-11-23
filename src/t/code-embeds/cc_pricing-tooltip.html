@@ -1,48 +1,76 @@
-<!-- Embed on page-->
 <script>
-    (function (window) {
-        console.log('Tooltip script loaded');
-    
-        if (typeof window.initializeTooltips !== 'function') {
-            window.initializeTooltips = function () {
-                console.log('Initializing tooltips');
-                const elements = document.querySelectorAll('[data-tooltip="instance"]');
-                console.log('Found tooltip elements:', elements.length);
-                
-                elements.forEach((element) => {
-                    if (!element._tippy) {
-                        const contentDiv = element.querySelector('div[data-tooltip="content"]');
-                        
-                        if (contentDiv) {
-                            tippy(element, {
-                                content: contentDiv.innerHTML,
-                                allowHTML: true,
-                                interactive: true,
-                                onShow(instance) {
-                                    const featureNameDiv = instance.reference.closest('.pricing-compare_cell')
-                                        ?.querySelector('[cc-t-id="pricing-feature"]');
-                                    const featureName = featureNameDiv?.textContent || 'Unknown feature';
-                                    console.log('Showing tooltip:', featureName);
-                                    
-                                    window.trackingHelper.trackItemClicked({
-                                        item: 'tooltip_features',
-                                        item_type: 'hover',
-                                        label: window.trackingHelper.snakeCase(featureName),
-                                        location: 'grid:plan_features',
-                                        pricing_version: 3.1
-                                    });
-                                }
-                            });
-                        }
+  (function (window) {
+    if (typeof window.initializeTooltips !== 'function') {
+      // Track the actual tooltip elements that have been interacted with
+      const trackedTooltipElements = new WeakSet();
+
+      window.initializeTooltips = function () {
+        const elements = document.querySelectorAll('[data-tooltip="instance"]');            
+
+        elements.forEach((element) => {
+          if (!element._tippy) {
+            const contentDiv = element.querySelector('div[data-tooltip="content"]');
+
+            if (contentDiv) {
+              tippy(element, {
+                content: contentDiv.innerHTML,
+                allowHTML: true,
+                interactive: true,
+                onShow(instance) {
+                  // Only track if we haven't tracked this specific tooltip element before
+                  if (!trackedTooltipElements.has(instance.reference)) {
+                    let label;
+                    let location;
+
+                    const pricingPlansCard = instance.reference.closest('.pricing-plans_card');
+                    const pricingTableRow = instance.reference.closest('.pricing-compare_table-row-wrap');
+
+                    if (pricingPlansCard) {
+                      const parentChecklistItem = instance.reference.closest('.checklist-item');
+                      label = parentChecklistItem?.getAttribute('cc-t-pricing_plans_feature_label');
+                      location = 'body:compare_plans';
+                    } else if (pricingTableRow) {
+                      label = pricingTableRow.getAttribute('cc-t-pricing_feature_label');
+                      location = 'grid:plan_features';
+
+                      // Check if snake case is disabled for this row
+                      const shouldSnakeCase = pricingTableRow.getAttribute('cc-t-utility-snake_case')?.toLowerCase() !== 'off';
+                      if (!shouldSnakeCase) {
+                        // Use label as-is without snake casing
+                        trackedTooltipElements.add(instance.reference);
+
+                        window.trackingHelper.trackItemClicked({
+                          item: 'tooltip_features',
+                          item_type: 'hover',
+                          label: label, // Use label directly without snake casing
+                          location: location
+                        });
+                        return; // Exit early to avoid duplicate tracking
+                      }
                     }
-                });
-            };
-    
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', window.initializeTooltips);
-            } else {
-                window.initializeTooltips();
+
+                    // Add this tooltip element to our tracked set
+                    trackedTooltipElements.add(instance.reference);
+
+                    window.trackingHelper.trackItemClicked({
+                      item: 'tooltip_features',
+                      item_type: 'hover',
+                      label: window.trackingHelper.snakeCase(label),
+                      location: location
+                    });
+                  }
+                }
+              });
             }
-        }
-    })(window);
-    </script>
+          }
+        });
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.initializeTooltips);
+      } else {
+        window.initializeTooltips();
+      }
+    }
+  })(window);
+</script>

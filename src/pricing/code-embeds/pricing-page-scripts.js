@@ -1,3 +1,5 @@
+// UNUSED: not on any live pricing page (/pricing, /pricing/growth, /pricing/talent, /es/pricing, /fr/pricing) as of 2026-11-23.
+// Kept for reference only.
 document.addEventListener('DOMContentLoaded', function() {
     // Helper function to get the language prefix and base path
     function getUrlParts() {
