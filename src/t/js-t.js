@@ -434,9 +434,16 @@
 
       if (!window.analytics) return;
 
-      // Segment source middleware: stitch the $impression event's anonymousId
-      // to our own attribution_user_id cookie so Amplitude's device_id lines
-      // up with the rest of the user's stitched journey. See:
+      // Segment source middleware for Amplitude Web Experiment $impression
+      // events (routed through Segment via ?integration=segment):
+      // 1. Stitch anonymousId to our own attribution_user_id cookie so
+      //    Amplitude's device_id lines up with the rest of the user's
+      //    stitched journey.
+      // 2. Add page context (page, path, title) as event properties so
+      //    experiment results can be segmented by the page the user was
+      //    exposed on. Existing experiment/flag/variant properties are left
+      //    untouched, and any page property already set is not overwritten.
+      // See:
       // https://www.twilio.com/docs/segment/connections/sources/catalog/libraries/website/javascript/middleware
       if (
         typeof window.analytics.addSourceMiddleware === "function" &&
@@ -444,16 +451,29 @@
       ) {
         window.analytics.addSourceMiddleware(({ payload, next }) => {
           const event = payload.obj;
-          const attributionId = window.getAttributionUserId
-            ? window.getAttributionUserId()
-            : null;
 
-          if (
-            event?.type === "track" &&
-            event?.event === "$impression" &&
-            attributionId
-          ) {
-            event.anonymousId = attributionId;
+          if (event?.type === "track" && event?.event === "$impression") {
+            const attributionId = window.getAttributionUserId
+              ? window.getAttributionUserId()
+              : null;
+
+            if (attributionId) {
+              event.anonymousId = attributionId;
+            }
+
+            const { origin, pathname } = window.location;
+            const pageContext = {
+              page: origin + pathname,
+              path: pathname,
+              title: document.title,
+            };
+
+            event.properties = event.properties || {};
+            Object.keys(pageContext).forEach((key) => {
+              if (event.properties[key] == null || event.properties[key] === "") {
+                event.properties[key] = pageContext[key];
+              }
+            });
           }
 
           next(payload);
